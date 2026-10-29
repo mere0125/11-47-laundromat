@@ -10,6 +10,7 @@
   --yellow: #ffd25c;
   --green: #74d89b;
   --ink: #221833;
+  --print: "Avenir Next Condensed", "Helvetica Neue", Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -38,8 +39,8 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--yellow); o
 .sign-copy p { margin: 0 0 2px; color: #ab97cf; font: 10px "Yu Mincho", "Hiragino Mincho ProN", serif; letter-spacing: .22em; }
 .sign-copy h1 { margin: 0; font: 700 clamp(31px, 4vw, 56px)/.95 "Yu Mincho", "Hiragino Mincho ProN", serif; letter-spacing: .02em; }
 .sign-copy h1 span { display: inline-block; margin-right: 12px; color: var(--pink); font-family: Georgia, serif; font-style: italic; font-weight: 400; text-shadow: 0 0 14px rgba(255,96,127,.42); }
-.sign-copy small { display: block; margin-top: 5px; color: var(--cyan); font: 8px "Courier New", monospace; letter-spacing: .18em; text-transform: uppercase; }
-.shop-sign time { padding: 10px 12px; border: 1px solid #574576; color: var(--yellow); font: 700 10px "Courier New", monospace; box-shadow: inset 0 0 14px rgba(255,210,92,.08); }
+.sign-copy small { display: block; margin-top: 5px; color: var(--cyan); font: 600 8px var(--print); letter-spacing: .18em; text-transform: uppercase; }
+.shop-sign time { padding: 10px 12px; border: 1px solid #574576; color: var(--yellow); font: 700 10px var(--print); letter-spacing: .08em; box-shadow: inset 0 0 14px rgba(255,210,92,.08); }
 
 .shop-window { position: relative; height: min(64vh, 620px); min-height: 480px; overflow: hidden; background: var(--indigo); }
 #room { position: absolute; inset: 0; display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
@@ -60,14 +61,15 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--yellow); o
   box-shadow: 7px 7px 0 rgba(4,3,15,.56), inset 0 0 22px rgba(83,55,121,.25);
 }
 .coin-panel > p { margin: 0 0 8px; color: #a995c7; font: 9px "Yu Gothic", sans-serif; letter-spacing: .2em; }
-.coin-panel button { position: relative; display: block; width: 100%; min-height: 33px; margin: 5px 0; padding: 0 6px 0 25px; border: 1px solid #584775; background: #17112c; color: #cbbce2; text-align: left; font: 7px "Courier New", monospace; }
+.machine-guide { margin: 0 0 9px; padding: 6px 7px 6px 24px; border-left: 1px solid var(--pink); color: #bcaecf; background: rgba(10,8,28,.32); font: 500 7px/1.5 var(--print); letter-spacing: .025em; }
+.coin-panel button { position: relative; display: block; width: 100%; min-height: 33px; margin: 5px 0; padding: 0 6px 0 25px; border: 1px solid #584775; background: #17112c; color: #cbbce2; text-align: left; font: 600 7px var(--print); letter-spacing: .06em; }
 .coin-panel button:hover { border-color: var(--cyan); color: var(--cyan); }
 .coin-panel button i { position: absolute; left: 8px; top: 12px; width: 6px; height: 6px; border-radius: 50%; background: #524565; box-shadow: inset 0 0 0 1px #21172f; }
 .coin-panel button.active i { background: var(--green); box-shadow: 0 0 8px var(--green); }
 .coin-panel #coin { min-height: 48px; padding-left: 48px; border-color: #786390; color: var(--yellow); }
 .coin-panel #coin span { position: absolute; left: 6px; top: 9px; display: grid; place-items: center; width: 34px; height: 27px; border: 1px solid var(--yellow); border-radius: 50%; font-size: 8px; }
 .coin-panel #coin:active { transform: translate(1px, 1px); }
-.coin-panel > strong { display: block; margin-top: 9px; color: var(--pink); font: 8px "Courier New", monospace; text-align: right; }
+.coin-panel > strong { display: block; margin-top: 9px; color: var(--pink); font: 600 8px var(--print); letter-spacing: .06em; text-align: right; }
 
 .people-board {
   position: absolute;
@@ -82,17 +84,17 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--yellow); o
 }
 .people-board h2 { margin: 0 0 8px; color: var(--cyan); font: 400 12px "Yu Mincho", serif; }
 .register-row { display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: center; padding: 4px 0; border-top: 1px solid rgba(255,255,255,.11); }
-.register-row strong { overflow: hidden; color: #e4d7f1; font: 7px "Courier New", monospace; text-overflow: ellipsis; white-space: nowrap; }
-.register-row span { color: #988aac; font: 6px "Courier New", monospace; }
+.register-row strong { overflow: hidden; color: #e4d7f1; font: 600 7px var(--print); text-overflow: ellipsis; white-space: nowrap; }
+.register-row span { color: #988aac; font: 600 6px var(--print); letter-spacing: .04em; }
 .register-row i { grid-column: 1 / -1; height: 2px; background: #342946; }
 .register-row i b { display: block; height: 2px; background: var(--register-color); box-shadow: 0 0 5px var(--register-color); }
 .people-board > p { margin: 8px 0 0; color: #8b7d9f; font: italic 7px Georgia, serif; }
 
 .floor-note { position: absolute; z-index: 3; left: 50%; bottom: 20px; min-width: 190px; padding: 9px 12px; border: 1px solid rgba(255,210,92,.55); background: rgba(20,13,42,.86); transform: translateX(-50%) rotate(-.4deg); box-shadow: 4px 4px 0 rgba(4,3,15,.35); }
 .floor-note small, .floor-note strong, .floor-note span { display: block; }
-.floor-note small { color: var(--yellow); font: 6px "Courier New", monospace; }
+.floor-note small { color: var(--yellow); font: 600 6px var(--print); letter-spacing: .05em; }
 .floor-note strong { margin: 3px 0 1px; color: #fff0c1; font: 400 14px "Yu Mincho", serif; }
-.floor-note span { color: #a695ba; font: 7px "Courier New", monospace; }
+.floor-note span { color: #a695ba; font: 500 7px var(--print); }
 
 .receipt {
   position: relative;
@@ -107,15 +109,15 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--yellow); o
   box-shadow: 0 -7px 0 #0a071a;
 }
 .receipt::before { content: ""; position: absolute; left: 0; right: 0; top: 8px; border-top: 1px dashed rgba(34,24,51,.35); }
-.receipt-title > span { color: #7b5575; font: 8px "Courier New", monospace; }
+.receipt-title > span { color: #7b5575; font: 600 8px var(--print); letter-spacing: .08em; }
 .receipt-title h2 { margin: 7px 0 6px; font: 700 26px/.9 "Yu Mincho", "Hiragino Mincho ProN", serif; letter-spacing: -.03em; }
 .receipt-title p { margin: 0; color: #68556c; font: 9px/1.4 Georgia, serif; }
 .pickers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-content: start; }
 .pickers label { display: grid; grid-template-columns: 20px 1fr; align-items: center; }
 .pickers label b { color: #cc3e61; font: italic 18px Georgia, serif; }
 .pickers label:nth-child(2) b { color: #415bb0; }
-.pickers select { min-width: 0; width: 100%; height: 31px; padding: 0 6px; border: 1px solid #56455e; border-radius: 0; background: transparent; color: var(--ink); font: 8px "Courier New", monospace; }
-.pickers button { grid-column: 1 / -1; height: 29px; border: 0; border-bottom: 1px solid #786879; background: transparent; color: #74506b; text-align: left; font: 8px "Courier New", monospace; }
+.pickers select { min-width: 0; width: 100%; height: 31px; padding: 0 6px; border: 1px solid #56455e; border-radius: 0; background: transparent; color: var(--ink); font: 500 8px var(--print); }
+.pickers button { grid-column: 1 / -1; height: 29px; border: 0; border-bottom: 1px solid #786879; background: transparent; color: #74506b; text-align: left; font: 500 8px var(--print); letter-spacing: .02em; }
 .pickers button:hover { color: #cc3e61; }
 .distance-readout { border-top: 1px solid #7e6c7d; border-bottom: 1px solid #7e6c7d; }
 .distance-line { display: grid; grid-template-columns: 145px 58px 1fr; align-items: center; gap: 8px; min-height: 53px; }
@@ -125,20 +127,20 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--yellow); o
 .distance-line > i { height: 8px; border-top: 1px solid rgba(34,24,51,.28); border-bottom: 1px solid #2b2035; }
 .distance-line > i b { display: block; width: 0; height: 7px; background: #cc3e61; transition: width .25s ease; }
 .mind-line > i b { background: #415bb0; }
-.distance-line > small { grid-column: 1 / -1; margin-top: -7px; color: #806f80; font: 6px "Courier New", monospace; }
+.distance-line > small { grid-column: 1 / -1; margin-top: -7px; color: #806f80; font: 500 6px var(--print); letter-spacing: .025em; }
 .receipt-ending > p { min-height: 42px; margin: 0 0 10px; color: #6d425e; font: italic 11px/1.35 Georgia, serif; }
 .receipt-ending > p b { color: #bb3156; font-weight: 400; }
 .distribution-strips { display: grid; gap: 5px; margin-bottom: 9px; }
 .dist-row { display: grid; grid-template-columns: 14px 1fr; align-items: center; gap: 5px; }
-.dist-row > b { font: 700 7px "Courier New", monospace; }
+.dist-row > b { font: 700 7px var(--print); }
 .dist-row > span { display: flex; height: 5px; }
 .dist-row i { display: block; height: 5px; }
 .receipt details { border-top: 1px solid rgba(34,24,51,.25); padding-top: 7px; }
-.receipt summary { color: #655469; font: 8px "Courier New", monospace; cursor: pointer; }
+.receipt summary { color: #655469; font: 500 8px var(--print); cursor: pointer; }
 .receipt details p { margin: 6px 0; color: #6f6470; font: 8px/1.35 Georgia, serif; }
 
 .street-edge { display: flex; justify-content: space-between; align-items: center; min-height: 55px; padding: 0 26px; border-top: 2px solid #3c2d58; color: #8e7da7; background: #0b081b; }
-.street-edge span { color: var(--pink); font: 700 9px "Courier New", monospace; letter-spacing: .15em; }
+.street-edge span { color: var(--pink); font: 700 9px var(--print); letter-spacing: .15em; }
 .street-edge p { margin: 0; font: italic 9px Georgia, serif; }
 
 body.lights-off .shop-window { filter: brightness(.65) saturate(.85); }

@@ -291,14 +291,14 @@ function drawObstacle(rect, index) {
     ctx.beginPath(); ctx.arc(center.x, center.y, radius * .67, elapsed * (active ? .004 : .00025) + index, elapsed * (active ? .004 : .00025) + index + Math.PI * 1.35); ctx.strokeStyle = rgba(machineColor, active ? .9 : .28); ctx.lineWidth = active ? 2 : 1; ctx.stroke();
     ctx.fillStyle = active ? colors.yellow : "rgba(225,210,235,.25)"; ctx.fillRect(topLeft.x + width - 7, topLeft.y + 4, 2.5, 2.5);
   }
-  ctx.fillStyle = "rgba(255,243,201,.78)"; ctx.font = `${Math.max(6, 7 * scaleInfo().scale)}px Courier New`;
+  ctx.fillStyle = "rgba(255,243,201,.78)"; ctx.font = `600 ${Math.max(6, 7 * scaleInfo().scale)}px Avenir Next Condensed, Arial`;
   ctx.fillText(rect.label, topLeft.x + 5, topLeft.y + 10);
 }
 function drawAttractors() {
   attractors.forEach(attractor => {
     const p = screen(attractor); ctx.strokeStyle = attractor.color; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(p.x - 6, p.y); ctx.lineTo(p.x + 6, p.y); ctx.stroke();
-    ctx.shadowBlur = 7; ctx.shadowColor = attractor.color; ctx.fillStyle = "rgba(255,243,201,.86)"; ctx.font = "700 7px Courier New"; ctx.fillText(attractor.short, p.x + 9, p.y + 3); ctx.shadowBlur = 0;
+    ctx.shadowBlur = 7; ctx.shadowColor = attractor.color; ctx.fillStyle = "rgba(255,243,201,.86)"; ctx.font = "700 7px Avenir Next Condensed, Arial"; ctx.fillText(attractor.short, p.x + 9, p.y + 3); ctx.shadowBlur = 0;
   });
 }
 function drawOccupants() {
@@ -309,7 +309,7 @@ function drawOccupants() {
     ctx.strokeStyle = color; ctx.lineWidth = value === selectedA || value === selectedB ? 3 : 1.8;
     ctx.beginPath(); ctx.moveTo(p.x - 7, p.y); ctx.lineTo(p.x + 7, p.y); ctx.stroke();
     ctx.fillStyle = "rgba(13,10,31,.82)"; ctx.fillRect(p.x + 10, p.y - 11, Math.min(114, occupant.name.length * 5.2 + 9), 15);
-    ctx.fillStyle = "rgba(255,243,201,.88)"; ctx.font = "700 7px Courier New"; ctx.fillText(occupant.name.toUpperCase(), p.x + 14, p.y - 1);
+    ctx.fillStyle = "rgba(255,243,201,.88)"; ctx.font = "700 7px Avenir Next Condensed, Arial"; ctx.fillText(occupant.name.toUpperCase(), p.x + 14, p.y - 1);
   });
   if (comparison) {
     [[comparison.a, "A", colors.red], [comparison.b, "B", colors.blue]].forEach(([ref, label, color]) => {
