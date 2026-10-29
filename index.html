@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="11:47 Laundromat. A playable night scene about sight, waiting and attention." />
+    <title>11:47 Laundromat</title>
+    <link rel="stylesheet" href="styles.css?v=20261029-3" />
+  </head>
+  <body>
+    <main class="night-game">
+      <header class="shop-sign">
+        <button id="neon" class="neon-switch" type="button" aria-label="Switch neon sign">ネオン</button>
+        <div class="sign-copy">
+          <p>午前零時前の最後の洗濯</p>
+          <h1><span>11:47</span> コインランドリー</h1>
+          <small>the last wash before midnight</small>
+        </div>
+        <time id="clock">11:47:00 PM</time>
+      </header>
+
+      <div class="shop-window">
+        <canvas id="room" aria-label="Playable overhead view of a late night Japanese laundromat"></canvas>
+
+        <div class="window-lettering" aria-hidden="true">
+          <b>洗濯</b>
+          <span>乾燥</span>
+          <i>24</i>
+        </div>
+
+        <aside class="coin-panel" aria-label="Laundromat controls">
+          <p>操作盤</p>
+          <button id="coin" type="button"><span>100円</span>START A DRUM</button>
+          <button id="lights" type="button"><i></i>CEILING LIGHTS</button>
+          <button id="door" type="button"><i></i>FRONT DOOR</button>
+          <button id="play" type="button"><i></i>PAUSE THE NIGHT</button>
+          <button id="reset" type="button">RESET</button>
+          <strong id="coin-count">0 COINS</strong>
+        </aside>
+
+        <aside class="people-board">
+          <h2>who is still awake</h2>
+          <div id="attention-register"></div>
+          <p id="active-note">click a person, machine or floor tile</p>
+        </aside>
+
+        <div id="inspection" class="floor-note" aria-live="polite">
+          <small>you are looking at</small>
+          <strong>folding aisle</strong>
+          <span>open floor</span>
+        </div>
+      </div>
+
+      <div class="receipt" aria-label="Distance comparison receipt">
+        <div class="receipt-title">
+          <span>NO 1147</span>
+          <h2>two ways of being near</h2>
+          <p>The machines can separate two views while the same thought keeps two people close.</p>
+        </div>
+
+        <div class="pickers">
+          <label><b>A</b><select id="select-a" aria-label="First person or place"></select></label>
+          <label><b>B</b><select id="select-b" aria-label="Second person or place"></select></label>
+          <button id="contradiction" type="button">show me the strange pair</button>
+        </div>
+
+        <div class="distance-readout">
+          <div class="distance-line sight-line">
+            <span>what they can see</span>
+            <strong id="isovist-value">—</strong>
+            <i><b id="isovist-bar"></b></i>
+            <small id="isovist-detail">visible space disagreement</small>
+          </div>
+          <div class="distance-line mind-line">
+            <span>where their attention goes</span>
+            <strong id="attention-value">—</strong>
+            <i><b id="attention-bar"></b></i>
+            <small id="attention-detail">attention transport</small>
+          </div>
+        </div>
+
+        <div class="receipt-ending">
+          <p id="reading">Choose two people or places.</p>
+          <div id="distribution-strips" class="distribution-strips"></div>
+          <details>
+            <summary>how the distances work</summary>
+            <p>Visible distance compares the cells each viewpoint can see after washers, dryers and furniture block the rays.</p>
+            <p>Attention distance measures the effort needed to move one attention pattern onto another across the room.</p>
+            <p>The attention patterns are written for this simulation. They are not eye tracking.</p>
+          </details>
+        </div>
+      </div>
+
+      <footer class="street-edge">
+        <span>MERE CUI</span>
+        <p>night keeps moving even when the laundry does not</p>
+      </footer>
+    </main>
+    <script src="app.js?v=20261029-3"></script>
+  </body>
+</html>
