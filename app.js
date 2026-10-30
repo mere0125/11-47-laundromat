@@ -54,6 +54,15 @@ let neonOn = true;
 let doorOpen = true;
 let coins = 0;
 const activeMachines = new Set([1, 4, 9, 12]);
+const METERS_PER_UNIT = .018;
+const PERSONAL_SPACE_METERS = 1.2;
+const MACHINE_CLEARANCE_METERS = .8;
+const EXIT_CLEARANCE_METERS = .9;
+let proximity = { body: [], machine: [], attention: [], exit: [] };
+let draggedOccupant = null;
+let pointerMoved = false;
+let dragStart = null;
+let attentionPairCache = null;
 
 function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
@@ -175,6 +184,41 @@ function earthMover(sourceWeights, targetWeights) {
   return cost;
 }
 const maximumAttentionDistance = Math.max(...attractors.flatMap(a => attractors.map(b => distance(a, b))));
+
+function occupantPairs() {
+  const pairs = [];
+  for (let i = 0; i < occupants.length; i++) {
+    for (let j = i + 1; j < occupants.length; j++) pairs.push([occupants[i], occupants[j]]);
+  }
+  return pairs;
+}
+function dominantAttention(occupant) {
+  const weight = Math.max(...occupant.attention);
+  return { index: occupant.attention.indexOf(weight), weight };
+}
+function machineCenter(rect) { return { x: rect.x + rect.w * .5, y: rect.y + rect.h * .5 }; }
+function computeProximity() {
+  const pairs = occupantPairs();
+  proximity.body = pairs.map(([a, b]) => ({ a, b, meters: distance(a, b) * METERS_PER_UNIT })).filter(item => item.meters < PERSONAL_SPACE_METERS);
+  if (!attentionPairCache) {
+    attentionPairCache = pairs.map(([a, b]) => {
+      const focusA = dominantAttention(a), focusB = dominantAttention(b);
+      const cost = earthMover(a.attention, b.attention);
+      return { a, b, focusA, focusB, cost, attractor: attractors[focusA.index] };
+    }).filter(item => item.cost < 30 && item.focusA.index === item.focusB.index && item.focusA.weight >= .45 && item.focusB.weight >= .45);
+  }
+  proximity.attention = attentionPairCache;
+  proximity.machine = [];
+  obstacles.forEach((machine, index) => {
+    if (!activeMachines.has(index) || (machine.kind !== "washer" && machine.kind !== "dryer")) return;
+    occupants.forEach(occupant => {
+      const meters = distance(occupant, machineCenter(machine)) * METERS_PER_UNIT;
+      if (meters < MACHINE_CLEARANCE_METERS) proximity.machine.push({ occupant, machine, index, meters });
+    });
+  });
+  const door = attractors.find(item => item.id === "door");
+  proximity.exit = occupants.map(occupant => ({ occupant, meters: distance(occupant, door) * METERS_PER_UNIT })).filter(item => item.meters < EXIT_CLEARANCE_METERS);
+}
 
 function referent(value) {
   const [type, id] = value.split(":");
@@ -306,19 +350,47 @@ function drawOccupants() {
   occupants.forEach(occupant => {
     const p = screen(occupant), value = `occupant:${occupant.id}`;
     const color = value === selectedA ? colors.red : value === selectedB ? colors.blue : colors.ink;
+    const conflict = proximity.body.find(item => item.a === occupant || item.b === occupant);
+    const labelShift = conflict ? (conflict.a === occupant ? -22 : 18) : 0;
     ctx.strokeStyle = color; ctx.lineWidth = value === selectedA || value === selectedB ? 3 : 1.8;
     ctx.beginPath(); ctx.moveTo(p.x - 7, p.y); ctx.lineTo(p.x + 7, p.y); ctx.stroke();
-    ctx.fillStyle = "rgba(13,10,31,.82)"; ctx.fillRect(p.x + 10, p.y - 11, Math.min(114, occupant.name.length * 5.2 + 9), 15);
-    ctx.fillStyle = "rgba(255,243,201,.88)"; ctx.font = "700 7px Avenir Next Condensed, Arial"; ctx.fillText(occupant.name.toUpperCase(), p.x + 14, p.y - 1);
+    ctx.fillStyle = "rgba(13,10,31,.82)"; ctx.fillRect(p.x + 10, p.y - 11 + labelShift, Math.min(114, occupant.name.length * 5.2 + 9), 15);
+    ctx.fillStyle = "rgba(255,243,201,.88)"; ctx.font = "700 7px Avenir Next Condensed, Arial"; ctx.fillText(occupant.name.toUpperCase(), p.x + 14, p.y - 1 + labelShift);
   });
   if (comparison) {
     [[comparison.a, "A", colors.red], [comparison.b, "B", colors.blue]].forEach(([ref, label, color]) => {
-      const p = screen(ref); ctx.fillStyle = color; ctx.font = "italic 700 15px Georgia"; ctx.fillText(label, p.x - 5, p.y - 10);
+      const p = screen(ref), inConflict = ref.type === "occupant" && proximity.body.some(item => item.a === ref.source || item.b === ref.source);
+      ctx.fillStyle = color; ctx.font = "italic 700 15px Georgia"; ctx.fillText(label, p.x - 5, p.y - (inConflict ? 27 : 10));
     });
   }
 }
+function drawProximity() {
+  const unitRadius = PERSONAL_SPACE_METERS / METERS_PER_UNIT * scaleInfo().scale;
+  proximity.body.forEach(item => {
+    const a = screen(item.a), b = screen(item.b);
+    ctx.save(); ctx.strokeStyle = rgba(colors.red, .88); ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.setLineDash([]);
+    [a, b].forEach(point => { ctx.beginPath(); ctx.arc(point.x, point.y, unitRadius, 0, Math.PI * 2); ctx.strokeStyle = rgba(colors.red, .32); ctx.stroke(); });
+    const middle = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    ctx.fillStyle = colors.red; ctx.font = "700 7px Avenir Next Condensed, Arial"; ctx.fillText(`${item.meters.toFixed(1)} m TOO CLOSE`, middle.x - 25, middle.y - unitRadius - 7); ctx.restore();
+  });
+  proximity.attention.forEach(item => {
+    const a = screen(item.a), b = screen(item.b), target = screen(item.attractor);
+    ctx.save(); ctx.strokeStyle = rgba(colors.violet, .65); ctx.lineWidth = 1; ctx.setLineDash([2, 5]);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(target.x, target.y, b.x, b.y); ctx.stroke();
+    ctx.fillStyle = colors.violet; ctx.fillRect(target.x - 2, target.y - 2, 4, 4); ctx.restore();
+  });
+  proximity.machine.forEach(item => {
+    const a = screen(item.machine), b = screen({ x: item.machine.x + item.machine.w, y: item.machine.y + item.machine.h });
+    ctx.save(); ctx.strokeStyle = colors.red; ctx.lineWidth = 2; ctx.strokeRect(a.x - 3, a.y - 3, b.x - a.x + 6, b.y - a.y + 6); ctx.restore();
+  });
+  if (proximity.exit.length) {
+    const door = screen(attractors.find(item => item.id === "door"));
+    ctx.save(); ctx.strokeStyle = colors.red; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(door.x, door.y, 22, Math.PI, Math.PI * 2); ctx.stroke(); ctx.restore();
+  }
+}
 function drawPlan() {
-  drawTileGrid(); drawIsovists(); drawAttentionThreads(); obstacles.forEach(drawObstacle); drawAttractors(); drawOccupants();
+  drawTileGrid(); drawIsovists(); drawAttentionThreads(); obstacles.forEach(drawObstacle); drawAttractors(); drawOccupants(); drawProximity();
 }
 
 function updateOccupants(dt) {
@@ -362,12 +434,34 @@ function updateComparison(force = false) {
   document.querySelector("#reading").innerHTML = contrast
     ? `<b>Far by sight, close by attention.</b> The machines divide their views; the same clock occupies both waits.`
     : `They are <b>${sight}</b> in visible space and <b>${attention}</b> in attention space.`;
+  updateProximityUI();
 }
 function updateRegister() {
   document.querySelector("#attention-register").innerHTML = occupants.map(occupant => {
     const maximum = Math.max(...occupant.attention), index = occupant.attention.indexOf(maximum), attractor = attractors[index];
     return `<div class="register-row" style="--register-color:${attractor.color}"><strong>${occupant.name}</strong><span>${attractor.short} ${Math.round(maximum * 100)}%</span><i><b style="width:${maximum * 100}%"></b></i></div>`;
   }).join("");
+}
+function updateProximityUI() {
+  const signals = [];
+  if (proximity.body.length) {
+    const closest = [...proximity.body].sort((a, b) => a.meters - b.meters)[0];
+    signals.push(`<div class="proximity-signal hot"><span>BODY SPACE</span><b>${closest.meters.toFixed(1)} m</b></div>`);
+  }
+  if (proximity.machine.length) signals.push(`<div class="proximity-signal hot"><span>MACHINE CLEARANCE</span><b>${proximity.machine[0].meters.toFixed(1)} m</b></div>`);
+  if (proximity.exit.length) signals.push(`<div class="proximity-signal hot"><span>EXIT CLEARANCE</span><b>${proximity.exit[0].meters.toFixed(1)} m</b></div>`);
+  if (proximity.attention.length) signals.push(`<div class="proximity-signal mind"><span>ATTENTION DISTANCE</span><b>${Math.round(proximity.attention[0].cost)} STEPS</b></div>`);
+  document.querySelector("#proximity-signals").innerHTML = signals.length ? signals.join("") : `<div class="proximity-signal"><span>ROOM BREATHING</span><b>OK</b></div>`;
+
+  let rule = `<span>IF</span> every clearance is safe <b>THEN</b> keep the room moving <i>ELSE</i> slow the night down`;
+  if (proximity.attention.length) {
+    const item = proximity.attention[0];
+    rule = `<span>IF</span> attention distance is under 30 steps and both focus ${item.attractor.short} <b>THEN</b> mark their attention too close <i>ELSE</i> keep the wait private`;
+  }
+  if (proximity.exit.length) rule = `<span>IF</span> someone leaves less than 0.9 m at the door <b>THEN</b> mark the exit blocked <i>ELSE</i> keep the route open`;
+  if (proximity.machine.length) rule = `<span>IF</span> someone is within 0.8 m of an active drum <b>THEN</b> block its door <i>ELSE</i> let it open`;
+  if (proximity.body.length) rule = `<span>IF</span> two people are less than 1.2 m apart <b>THEN</b> ask for personal space <i>ELSE</i> let them wait`;
+  document.querySelector("#rule-ticket").innerHTML = rule;
 }
 function inspect(point) {
   const occupant = occupants.map(item => ({ item, d: distance(point, item) })).sort((a, b) => a.d - b.d)[0];
@@ -381,7 +475,7 @@ function inspect(point) {
 function render(now) {
   const dt = Math.min(now - lastFrame, 40); lastFrame = now;
   if (running) { elapsed += dt; updateOccupants(dt); }
-  updateComparison(); updateClock(); drawPlan(); requestAnimationFrame(render);
+  computeProximity(); updateComparison(); updateClock(); drawPlan(); requestAnimationFrame(render);
 }
 
 function setControl(id, label, active) {
@@ -409,17 +503,43 @@ document.querySelector("#coin").addEventListener("click", () => {
 document.querySelector("#reset").addEventListener("click", () => {
   elapsed = 0; running = true; lightsOn = true; neonOn = true; doorOpen = true; coins = 0;
   activeMachines.clear(); [1, 4, 9, 12].forEach(index => activeMachines.add(index));
+  [[246, 272], [676, 215], [701, 354], [294, 406]].forEach(([x, y], index) => {
+    occupants[index].baseX = x; occupants[index].baseY = y; occupants[index].x = x; occupants[index].y = y;
+  });
   document.body.classList.remove("lights-off", "neon-off"); document.querySelector("#neon").classList.add("on");
   setControl("#play", "PAUSE THE NIGHT", true); setControl("#lights", "CEILING LIGHTS", true); setControl("#door", "FRONT DOOR", true);
   document.querySelector("#coin-count").textContent = "0 COINS"; note("the room returns to 11:47");
-  document.querySelector("#select-a").value = "occupant:mere"; document.querySelector("#select-b").value = "occupant:window"; updateComparison(true);
+  document.querySelector("#select-a").value = "occupant:mere"; document.querySelector("#select-b").value = "occupant:window"; computeProximity(); updateComparison(true);
 });
 document.querySelector("#select-a").addEventListener("change", () => updateComparison(true));
 document.querySelector("#select-b").addEventListener("change", () => updateComparison(true));
 document.querySelector("#contradiction").addEventListener("click", () => {
   document.querySelector("#select-a").value = "occupant:mere"; document.querySelector("#select-b").value = "occupant:window"; updateComparison(true);
 });
+canvas.addEventListener("pointerdown", event => {
+  const rect = canvas.getBoundingClientRect(), point = world(event.clientX - rect.left, event.clientY - rect.top);
+  const hit = occupants.map(item => ({ item, d: distance(point, item) })).sort((a, b) => a.d - b.d)[0];
+  if (hit.d >= 28) return;
+  draggedOccupant = hit.item; dragStart = point; pointerMoved = false; canvas.setPointerCapture(event.pointerId);
+  document.querySelector("#select-a").value = `occupant:${hit.item.id}`; note(`moving ${hit.item.name}`);
+});
+canvas.addEventListener("pointermove", event => {
+  if (!draggedOccupant) return;
+  const rect = canvas.getBoundingClientRect(), raw = world(event.clientX - rect.left, event.clientY - rect.top);
+  const point = { x: clamp(raw.x, WORLD.pad + 8, WORLD.w - WORLD.pad - 8), y: clamp(raw.y, WORLD.pad + 8, WORLD.h - WORLD.pad - 8) };
+  if (pointBlocked(point)) return;
+  if (distance(point, dragStart) > 3) pointerMoved = true;
+  draggedOccupant.baseX = point.x; draggedOccupant.baseY = point.y; draggedOccupant.x = point.x; draggedOccupant.y = point.y;
+  computeProximity(); updateProximityUI();
+});
+canvas.addEventListener("pointerup", event => {
+  if (!draggedOccupant) return;
+  const name = draggedOccupant.name; draggedOccupant = null; dragStart = null;
+  if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  updateComparison(true); note(pointerMoved ? `${name} waits in a new place` : `${name} becomes point A`);
+});
 canvas.addEventListener("click", event => {
+  if (pointerMoved) { pointerMoved = false; return; }
   const rect = canvas.getBoundingClientRect(), point = world(event.clientX - rect.left, event.clientY - rect.top);
   const hit = occupants.map(item => ({ item, d: distance(point, item) })).sort((a, b) => a.d - b.d)[0];
   const machineIndex = obstacles.findIndex(item => (item.kind === "washer" || item.kind === "dryer") && pointInRect(point, item));
@@ -429,6 +549,6 @@ canvas.addEventListener("click", event => {
 });
 
 window.addEventListener("resize", resize);
-buildVisibilitySamples(); fillSelects(); updateRegister(); resize(); updateComparison(true); inspect({ x: 450, y: 252 });
+buildVisibilitySamples(); fillSelects(); updateRegister(); resize(); computeProximity(); updateComparison(true); inspect({ x: 450, y: 252 });
 document.querySelector("#neon").classList.add("on"); setControl("#play", "PAUSE THE NIGHT", true); setControl("#lights", "CEILING LIGHTS", true); setControl("#door", "FRONT DOOR", true);
 requestAnimationFrame(render);

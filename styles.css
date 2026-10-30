@@ -88,6 +88,10 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--yellow); o
 .register-row span { color: #988aac; font: 600 6px var(--print); letter-spacing: .04em; }
 .register-row i { grid-column: 1 / -1; height: 2px; background: #342946; }
 .register-row i b { display: block; height: 2px; background: var(--register-color); box-shadow: 0 0 5px var(--register-color); }
+.proximity-signals { display: grid; gap: 3px; margin-top: 7px; }
+.proximity-signal { display: flex; justify-content: space-between; gap: 6px; padding: 3px 4px; border: 1px solid rgba(116,216,155,.34); color: #a5d7bd; background: rgba(116,216,155,.06); font: 600 6px var(--print); letter-spacing: .035em; }
+.proximity-signal.hot { border-color: rgba(255,96,127,.66); color: #ff9aae; background: rgba(255,96,127,.10); box-shadow: inset 2px 0 var(--pink); }
+.proximity-signal.mind { border-color: rgba(192,120,207,.62); color: #db9ee7; background: rgba(192,120,207,.09); box-shadow: inset 2px 0 var(--violet); }
 .people-board > p { margin: 8px 0 0; color: #8b7d9f; font: italic 7px Georgia, serif; }
 
 .floor-note { position: absolute; z-index: 3; left: 50%; bottom: 20px; min-width: 190px; padding: 9px 12px; border: 1px solid rgba(255,210,92,.55); background: rgba(20,13,42,.86); transform: translateX(-50%) rotate(-.4deg); box-shadow: 4px 4px 0 rgba(4,3,15,.35); }
@@ -112,6 +116,11 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--yellow); o
 .receipt-title > span { color: #7b5575; font: 600 8px var(--print); letter-spacing: .08em; }
 .receipt-title h2 { margin: 7px 0 6px; font: 700 26px/.9 "Yu Mincho", "Hiragino Mincho ProN", serif; letter-spacing: -.03em; }
 .receipt-title p { margin: 0; color: #68556c; font: 9px/1.4 Georgia, serif; }
+.rule-ticket { margin-top: 10px; padding: 7px 0 2px; border-top: 1px dashed rgba(34,24,51,.34); color: #5f5360; font: 500 7px/1.65 var(--print); }
+.rule-ticket span, .rule-ticket b, .rule-ticket i { display: inline-block; margin-right: 2px; padding: 0 3px; color: #fff7db; font: 700 6px var(--print); font-style: normal; letter-spacing: .06em; }
+.rule-ticket span { background: #d2a400; }
+.rule-ticket b { margin-left: 3px; background: #4f9b70; }
+.rule-ticket i { margin-left: 3px; background: #cf4968; }
 .pickers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-content: start; }
 .pickers label { display: grid; grid-template-columns: 20px 1fr; align-items: center; }
 .pickers label b { color: #cc3e61; font: italic 18px Georgia, serif; }

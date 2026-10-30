@@ -11,6 +11,15 @@ Four people wait inside a late-night laundromat. Occupants have live locations, 
 
 The default pair is deliberately far by isovist but close by attention: machines divide their views while the wall clock occupies both waits. The attention distributions are authored behavioral assumptions, not measured cognition or eye-tracking.
 
+## Proximity rules
+
+- If two people are less than 1.2 meters apart, the room asks for personal space.
+- If someone is within 0.8 meters of an active drum, its door is blocked.
+- If someone leaves less than 0.9 meters at the entrance, the exit is marked as blocked.
+- If two attention distributions are less than 30 transport steps apart and share one dominant focus, their attention is marked as too close.
+
+The drawing uses an approximate scale of 1.8 centimeters per plan unit. Dragging a person recalculates the physical clearances in real time.
+
 The scene is drawn in browser code. Insert a coin to wake a drum, click a person to make them point A, and choose point B on the receipt.
 
 **Mere Cui — Spatial AI, October 2026**
