@@ -20,6 +20,16 @@ The default pair is deliberately far by isovist but close by attention: machines
 
 The drawing uses an approximate scale of 1.8 centimeters per plan unit. Dragging a person recalculates the physical clearances in real time.
 
+## Position and movement
+
+- **Between** appears when a person occupies the open aisle separating the two folding tables.
+- **Adjacent** appears when a person is within 28 plan units of a washer or dryer edge with no occupiable gap between them.
+- **Among** appears when at least three people form a cluster whose largest pairwise separation is below 118 plan units.
+- **Toward** and **away** compare the start and end distance to the closest reference object at the beginning of a drag.
+- **Past** appears when the drag path enters and leaves the near field of a washer, dryer, or folding table.
+
+The colored paths retain the last three movement events for fourteen seconds. They are computed from the actual drag trajectory rather than assigned as decorative labels.
+
 The scene is drawn in browser code. Insert a coin to wake a drum, click a person to make them point A, and choose point B on the receipt.
 
-**Mere Cui — Spatial AI, October 2026**
+**Mere Cui — Spatial AI, November 2026**

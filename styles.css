@@ -43,7 +43,8 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--yellow); o
 .shop-sign time { padding: 10px 12px; border: 1px solid #574576; color: var(--yellow); font: 700 10px var(--print); letter-spacing: .08em; box-shadow: inset 0 0 14px rgba(255,210,92,.08); }
 
 .shop-window { position: relative; height: min(64vh, 620px); min-height: 480px; overflow: hidden; background: var(--indigo); }
-#room { position: absolute; inset: 0; display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+#room { position: absolute; inset: 0; display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+#room:active { cursor: grabbing; }
 .window-lettering { position: absolute; z-index: 2; left: 22px; top: 22px; display: grid; grid-template-columns: auto auto; align-items: end; gap: 0 7px; pointer-events: none; color: rgba(255,243,201,.82); text-shadow: 0 0 13px rgba(255,210,92,.28); }
 .window-lettering b { font: 700 22px "Yu Mincho", serif; writing-mode: vertical-rl; letter-spacing: .15em; }
 .window-lettering span { font: 12px "Yu Mincho", serif; writing-mode: vertical-rl; letter-spacing: .22em; }
@@ -92,6 +93,16 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--yellow); o
 .proximity-signal { display: flex; justify-content: space-between; gap: 6px; padding: 3px 4px; border: 1px solid rgba(116,216,155,.34); color: #a5d7bd; background: rgba(116,216,155,.06); font: 600 6px var(--print); letter-spacing: .035em; }
 .proximity-signal.hot { border-color: rgba(255,96,127,.66); color: #ff9aae; background: rgba(255,96,127,.10); box-shadow: inset 2px 0 var(--pink); }
 .proximity-signal.mind { border-color: rgba(192,120,207,.62); color: #db9ee7; background: rgba(192,120,207,.09); box-shadow: inset 2px 0 var(--violet); }
+.relation-register { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,243,201,.22); }
+.relation-register > small { display: block; margin: 4px 0; color: #82758f; font: 600 5px var(--print); letter-spacing: .15em; text-transform: uppercase; }
+.position-signals { display: flex; flex-wrap: wrap; gap: 3px; }
+.position-stamp { padding: 2px 4px; border: 1px solid #483c59; color: #756982; background: rgba(12,9,31,.22); font: 700 6px var(--print); letter-spacing: .045em; }
+.position-stamp.active { border-color: var(--yellow); color: var(--yellow); background: rgba(255,210,92,.09); box-shadow: 0 0 6px rgba(255,210,92,.2); }
+.relation-register > p { min-height: 22px; margin: 0; color: #c4b6d5; font: 600 7px/1.35 var(--print); }
+.relation-register > p b { display: inline-block; margin-right: 4px; color: var(--cyan); font-size: 8px; letter-spacing: .06em; }
+.relation-register > p.toward b { color: var(--cyan); }
+.relation-register > p.away b { color: var(--pink); }
+.relation-register > p.past b { color: var(--yellow); }
 .people-board > p { margin: 8px 0 0; color: #8b7d9f; font: italic 7px Georgia, serif; }
 
 .floor-note { position: absolute; z-index: 3; left: 50%; bottom: 20px; min-width: 190px; padding: 9px 12px; border: 1px solid rgba(255,210,92,.55); background: rgba(20,13,42,.86); transform: translateX(-50%) rotate(-.4deg); box-shadow: 4px 4px 0 rgba(4,3,15,.35); }
@@ -177,6 +188,8 @@ body.neon-off .sign-copy h1 span, body.neon-off .sign-copy small { color: #6c5b7
 }
 
 @media (max-width: 420px) {
+  .sign-copy h1 { font-size: 24px; white-space: nowrap; }
+  .sign-copy h1 span { margin-right: 8px; }
   .shop-window { height: 720px; }
   .coin-panel { width: 134px; }
   .people-board { width: 165px; }

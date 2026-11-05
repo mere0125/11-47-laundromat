@@ -63,6 +63,11 @@ let draggedOccupant = null;
 let pointerMoved = false;
 let dragStart = null;
 let attentionPairCache = null;
+let placement = { between: [], adjacent: [], among: [] };
+let activeTrail = [];
+let movementTrails = [];
+let dragReference = null;
+let movementEvent = null;
 
 function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
@@ -218,6 +223,65 @@ function computeProximity() {
   });
   const door = attractors.find(item => item.id === "door");
   proximity.exit = occupants.map(occupant => ({ occupant, meters: distance(occupant, door) * METERS_PER_UNIT })).filter(item => item.meters < EXIT_CLEARANCE_METERS);
+}
+
+function pointRectDistance(point, rect) {
+  const dx = Math.max(rect.x - point.x, 0, point.x - (rect.x + rect.w));
+  const dy = Math.max(rect.y - point.y, 0, point.y - (rect.y + rect.h));
+  return Math.hypot(dx, dy);
+}
+function computePlacement() {
+  const upper = obstacles.find(item => item.label === "FOLD 1"), lower = obstacles.find(item => item.label === "FOLD 2");
+  const left = Math.max(upper.x, lower.x), right = Math.min(upper.x + upper.w, lower.x + lower.w);
+  placement.between = occupants.filter(item => item.x > left && item.x < right && item.y > upper.y + upper.h && item.y < lower.y);
+
+  const machines = obstacles.map((item, index) => ({ item, index })).filter(({ item }) => item.kind === "washer" || item.kind === "dryer");
+  placement.adjacent = occupants.map(occupant => {
+    const nearest = machines.map(machine => ({ ...machine, gap: pointRectDistance(occupant, machine.item) })).sort((a, b) => a.gap - b.gap)[0];
+    return { occupant, machine: nearest.item, index: nearest.index, gap: nearest.gap };
+  }).filter(item => item.gap > 0 && item.gap < 28);
+
+  placement.among = [];
+  for (let i = 0; i < occupants.length - 2; i++) {
+    for (let j = i + 1; j < occupants.length - 1; j++) {
+      for (let k = j + 1; k < occupants.length; k++) {
+        const group = [occupants[i], occupants[j], occupants[k]];
+        const pairDistances = [distance(group[0], group[1]), distance(group[0], group[2]), distance(group[1], group[2])];
+        if (Math.max(...pairDistances) < 118) placement.among.push(group);
+      }
+    }
+  }
+}
+function nearestMovementReference(point) {
+  const references = obstacles.map(item => ({ name: item.label, point: machineCenter(item), rect: item }))
+    .concat(attractors.map(item => ({ name: item.short, point: item })));
+  return references.sort((a, b) => distance(point, a.point) - distance(point, b.point))[0];
+}
+function pastReference(points) {
+  if (points.length < 2) return null;
+  const start = points[0], end = points[points.length - 1];
+  return obstacles.filter(item => ["washer", "dryer", "table"].includes(item.kind)).map(item => {
+    const center = machineCenter(item);
+    const near = Math.min(...points.map(point => pointRectDistance(point, item)));
+    const crossesX = (start.x - center.x) * (end.x - center.x) < 0 && Math.min(start.y, end.y) < item.y + item.h + 60 && Math.max(start.y, end.y) > item.y - 60;
+    const crossesY = (start.y - center.y) * (end.y - center.y) < 0 && Math.min(start.x, end.x) < item.x + item.w + 60 && Math.max(start.x, end.x) > item.x - 60;
+    return { item, near, crossed: crossesX || crossesY };
+  }).filter(result => result.crossed && result.near < 50).sort((a, b) => a.near - b.near)[0] || null;
+}
+function finishMovement(actor, points, reference) {
+  if (points.length < 2 || !reference) return null;
+  const start = points[0], end = points[points.length - 1], passed = pastReference(points);
+  let kind, target;
+  if (passed) { kind = "PAST"; target = passed.item.label; }
+  else {
+    const change = distance(start, reference.point) - distance(end, reference.point);
+    if (change > 28) { kind = "TOWARD"; target = reference.name; }
+    else if (change < -28) { kind = "AWAY"; target = reference.name; }
+    else return null;
+  }
+  const event = { kind, actor: actor.name, target, points: points.map(point => ({ ...point })), born: performance.now() };
+  movementTrails.push(event); movementTrails = movementTrails.slice(-3); movementEvent = event;
+  return event;
 }
 
 function referent(value) {
@@ -389,8 +453,42 @@ function drawProximity() {
     ctx.save(); ctx.strokeStyle = colors.red; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(door.x, door.y, 22, Math.PI, Math.PI * 2); ctx.stroke(); ctx.restore();
   }
 }
+function drawMovement() {
+  const now = performance.now();
+  movementTrails = movementTrails.filter(item => now - item.born < 14000);
+  const palette = { TOWARD: colors.cyan, AWAY: colors.red, PAST: colors.yellow };
+  movementTrails.forEach(item => {
+    const alpha = clamp(1 - (now - item.born) / 14000, .18, 1), color = palette[item.kind];
+    pathWorld(item.points); ctx.strokeStyle = rgba(color, alpha * .76); ctx.lineWidth = 2; ctx.setLineDash(item.kind === "PAST" ? [3, 4] : []); ctx.stroke(); ctx.setLineDash([]);
+    const end = screen(item.points[item.points.length - 1]), previous = screen(item.points[Math.max(0, item.points.length - 2)]);
+    const angle = Math.atan2(end.y - previous.y, end.x - previous.x);
+    ctx.fillStyle = rgba(color, alpha); ctx.beginPath(); ctx.moveTo(end.x, end.y); ctx.lineTo(end.x - 8 * Math.cos(angle - .48), end.y - 8 * Math.sin(angle - .48)); ctx.lineTo(end.x - 8 * Math.cos(angle + .48), end.y - 8 * Math.sin(angle + .48)); ctx.closePath(); ctx.fill();
+    ctx.font = "700 7px Avenir Next Condensed, Arial"; ctx.fillText(`${item.kind} ${item.target}`, end.x + 8, end.y - 8);
+  });
+  if (activeTrail.length > 1) {
+    pathWorld(activeTrail); ctx.strokeStyle = "rgba(255,243,201,.72)"; ctx.lineWidth = 1.2; ctx.setLineDash([2, 3]); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+function drawPlacement() {
+  const upper = obstacles.find(item => item.label === "FOLD 1"), lower = obstacles.find(item => item.label === "FOLD 2");
+  if (placement.between.length) {
+    const a = screen({ x: Math.max(upper.x, lower.x), y: upper.y + upper.h }), b = screen({ x: Math.min(upper.x + upper.w, lower.x + lower.w), y: lower.y });
+    ctx.save(); ctx.fillStyle = rgba(colors.yellow, .055); ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y); ctx.strokeStyle = rgba(colors.yellow, .72); ctx.lineWidth = 1; ctx.setLineDash([7, 5]); ctx.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y); ctx.setLineDash([]);
+    placement.between.forEach(occupant => { const p = screen(occupant); ctx.fillStyle = colors.yellow; ctx.font = "700 7px Avenir Next Condensed, Arial"; ctx.fillText("BETWEEN", p.x - 20, p.y + 25); }); ctx.restore();
+  }
+  placement.adjacent.forEach(item => {
+    const person = screen(item.occupant), edge = screen({ x: clamp(item.occupant.x, item.machine.x, item.machine.x + item.machine.w), y: clamp(item.occupant.y, item.machine.y, item.machine.y + item.machine.h) });
+    ctx.save(); ctx.strokeStyle = colors.green; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(person.x, person.y); ctx.lineTo(edge.x, edge.y); ctx.stroke();
+    ctx.fillStyle = colors.green; ctx.font = "700 7px Avenir Next Condensed, Arial"; ctx.fillText("ADJACENT", person.x + 8, person.y + 18); ctx.restore();
+  });
+  placement.among.forEach(group => {
+    const center = { x: group.reduce((sum, item) => sum + item.x, 0) / group.length, y: group.reduce((sum, item) => sum + item.y, 0) / group.length };
+    const radius = Math.max(...group.map(item => distance(item, center))) * scaleInfo().scale + 16, p = screen(center);
+    ctx.save(); ctx.strokeStyle = rgba(colors.violet, .88); ctx.lineWidth = 1.5; ctx.setLineDash([2, 4]); ctx.beginPath(); ctx.arc(p.x, p.y, radius, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = colors.violet; ctx.font = "700 7px Avenir Next Condensed, Arial"; ctx.fillText("AMONG", p.x - 18, p.y - radius - 6); ctx.restore();
+  });
+}
 function drawPlan() {
-  drawTileGrid(); drawIsovists(); drawAttentionThreads(); obstacles.forEach(drawObstacle); drawAttractors(); drawOccupants(); drawProximity();
+  drawTileGrid(); drawIsovists(); drawAttentionThreads(); obstacles.forEach(drawObstacle); drawAttractors(); drawMovement(); drawOccupants(); drawProximity(); drawPlacement();
 }
 
 function updateOccupants(dt) {
@@ -434,7 +532,7 @@ function updateComparison(force = false) {
   document.querySelector("#reading").innerHTML = contrast
     ? `<b>Far by sight, close by attention.</b> The machines divide their views; the same clock occupies both waits.`
     : `They are <b>${sight}</b> in visible space and <b>${attention}</b> in attention space.`;
-  updateProximityUI();
+  updateProximityUI(); updateRelationUI();
 }
 function updateRegister() {
   document.querySelector("#attention-register").innerHTML = occupants.map(occupant => {
@@ -463,6 +561,18 @@ function updateProximityUI() {
   if (proximity.body.length) rule = `<span>IF</span> two people are less than 1.2 m apart <b>THEN</b> ask for personal space <i>ELSE</i> let them wait`;
   document.querySelector("#rule-ticket").innerHTML = rule;
 }
+function updateRelationUI() {
+  const conditions = [
+    ["BETWEEN", placement.between.length > 0],
+    ["ADJACENT", placement.adjacent.length > 0],
+    ["AMONG", placement.among.length > 0],
+  ];
+  document.querySelector("#position-signals").innerHTML = conditions.map(([label, active]) => `<span class="position-stamp${active ? " active" : ""}">${label}</span>`).join("");
+  const signal = document.querySelector("#movement-signal");
+  if (!movementEvent) { signal.className = ""; signal.textContent = "drag someone to begin"; return; }
+  signal.className = movementEvent.kind.toLowerCase();
+  signal.innerHTML = `<b>${movementEvent.kind}</b> ${movementEvent.target.toLowerCase()}`;
+}
 function inspect(point) {
   const occupant = occupants.map(item => ({ item, d: distance(point, item) })).sort((a, b) => a.d - b.d)[0];
   const obstacle = obstacles.find(rect => pointInRect(point, rect));
@@ -475,7 +585,7 @@ function inspect(point) {
 function render(now) {
   const dt = Math.min(now - lastFrame, 40); lastFrame = now;
   if (running) { elapsed += dt; updateOccupants(dt); }
-  computeProximity(); updateComparison(); updateClock(); drawPlan(); requestAnimationFrame(render);
+  computeProximity(); computePlacement(); updateComparison(); updateClock(); drawPlan(); requestAnimationFrame(render);
 }
 
 function setControl(id, label, active) {
@@ -509,7 +619,8 @@ document.querySelector("#reset").addEventListener("click", () => {
   document.body.classList.remove("lights-off", "neon-off"); document.querySelector("#neon").classList.add("on");
   setControl("#play", "PAUSE THE NIGHT", true); setControl("#lights", "CEILING LIGHTS", true); setControl("#door", "FRONT DOOR", true);
   document.querySelector("#coin-count").textContent = "0 COINS"; note("the room returns to 11:47");
-  document.querySelector("#select-a").value = "occupant:mere"; document.querySelector("#select-b").value = "occupant:window"; computeProximity(); updateComparison(true);
+  movementTrails = []; activeTrail = []; movementEvent = null; dragReference = null;
+  document.querySelector("#select-a").value = "occupant:mere"; document.querySelector("#select-b").value = "occupant:window"; computeProximity(); computePlacement(); updateComparison(true);
 });
 document.querySelector("#select-a").addEventListener("change", () => updateComparison(true));
 document.querySelector("#select-b").addEventListener("change", () => updateComparison(true));
@@ -520,7 +631,7 @@ canvas.addEventListener("pointerdown", event => {
   const rect = canvas.getBoundingClientRect(), point = world(event.clientX - rect.left, event.clientY - rect.top);
   const hit = occupants.map(item => ({ item, d: distance(point, item) })).sort((a, b) => a.d - b.d)[0];
   if (hit.d >= 28) return;
-  draggedOccupant = hit.item; dragStart = point; pointerMoved = false; canvas.setPointerCapture(event.pointerId);
+  draggedOccupant = hit.item; dragStart = point; activeTrail = [{ ...point }]; dragReference = nearestMovementReference(point); pointerMoved = false; canvas.setPointerCapture(event.pointerId);
   document.querySelector("#select-a").value = `occupant:${hit.item.id}`; note(`moving ${hit.item.name}`);
 });
 canvas.addEventListener("pointermove", event => {
@@ -529,14 +640,17 @@ canvas.addEventListener("pointermove", event => {
   const point = { x: clamp(raw.x, WORLD.pad + 8, WORLD.w - WORLD.pad - 8), y: clamp(raw.y, WORLD.pad + 8, WORLD.h - WORLD.pad - 8) };
   if (pointBlocked(point)) return;
   if (distance(point, dragStart) > 3) pointerMoved = true;
+  if (!activeTrail.length || distance(activeTrail[activeTrail.length - 1], point) > 4) activeTrail.push({ ...point });
   draggedOccupant.baseX = point.x; draggedOccupant.baseY = point.y; draggedOccupant.x = point.x; draggedOccupant.y = point.y;
-  computeProximity(); updateProximityUI();
+  computeProximity(); computePlacement(); updateProximityUI(); updateRelationUI();
 });
 canvas.addEventListener("pointerup", event => {
   if (!draggedOccupant) return;
-  const name = draggedOccupant.name; draggedOccupant = null; dragStart = null;
+  const actor = draggedOccupant, name = actor.name, eventResult = finishMovement(actor, activeTrail, dragReference);
+  draggedOccupant = null; dragStart = null; dragReference = null; activeTrail = [];
   if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
-  updateComparison(true); note(pointerMoved ? `${name} waits in a new place` : `${name} becomes point A`);
+  computePlacement(); updateComparison(true); updateRelationUI();
+  note(eventResult ? `${name} moved ${eventResult.kind.toLowerCase()} ${eventResult.target.toLowerCase()}` : pointerMoved ? `${name} waits in a new place` : `${name} becomes point A`);
 });
 canvas.addEventListener("click", event => {
   if (pointerMoved) { pointerMoved = false; return; }
@@ -549,6 +663,6 @@ canvas.addEventListener("click", event => {
 });
 
 window.addEventListener("resize", resize);
-buildVisibilitySamples(); fillSelects(); updateRegister(); resize(); computeProximity(); updateComparison(true); inspect({ x: 450, y: 252 });
+buildVisibilitySamples(); fillSelects(); updateRegister(); resize(); computeProximity(); computePlacement(); updateComparison(true); inspect({ x: 450, y: 252 });
 document.querySelector("#neon").classList.add("on"); setControl("#play", "PAUSE THE NIGHT", true); setControl("#lights", "CEILING LIGHTS", true); setControl("#door", "FRONT DOOR", true);
 requestAnimationFrame(render);

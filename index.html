@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>11:47 Laundromat</title>
-    <link rel="stylesheet" href="styles.css?v=20261029-5" />
+    <link rel="stylesheet" href="styles.css?v=20261104-1" />
   </head>
   <body>
     <main class="night-game">
@@ -30,9 +30,9 @@
         <aside class="coin-panel" aria-label="Laundromat controls">
           <p>操作盤</p>
           <ol class="machine-guide">
-            <li>insert a coin</li>
             <li>drag a person across the floor</li>
-            <li>choose B on the receipt</li>
+            <li>watch the relation stamps</li>
+            <li>follow the colored trail</li>
           </ol>
           <button id="coin" type="button"><span>100円</span>START A DRUM</button>
           <button id="lights" type="button"><i></i>CEILING LIGHTS</button>
@@ -46,6 +46,12 @@
           <h2>who is still awake</h2>
           <div id="attention-register"></div>
           <div id="proximity-signals" class="proximity-signals" aria-live="polite"></div>
+          <div class="relation-register">
+            <small>placement</small>
+            <div id="position-signals" class="position-signals" aria-live="polite"></div>
+            <small>last movement</small>
+            <p id="movement-signal">drag someone to begin</p>
+          </div>
           <p id="active-note">drag a person, or click a machine</p>
         </aside>
 
@@ -98,6 +104,7 @@
             <p>Attention distance measures the effort needed to move one attention pattern onto another across the room.</p>
             <p>The attention patterns are written for this simulation. They are not eye tracking.</p>
             <p>Proximity rules use body distance, machine clearance, exit clearance and shared attention. The plan uses an approximate scale of 1.8 centimeters per drawing unit.</p>
+            <p>Position recognizes between, adjacent and among. Movement compares the beginning and end of each drag to identify toward, away from and past.</p>
           </details>
         </div>
       </div>
@@ -107,6 +114,6 @@
         <p>night keeps moving even when the laundry does not</p>
       </footer>
     </main>
-    <script src="app.js?v=20261029-5"></script>
+    <script src="app.js?v=20261104-1"></script>
   </body>
 </html>
