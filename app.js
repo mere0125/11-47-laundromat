@@ -50,6 +50,7 @@ const zones = [
 ];
 
 let running = true;
+let simulationSpeed = 1;
 let elapsed = 0;
 let lastFrame = performance.now();
 let lastMetricUpdate = 0;
@@ -590,8 +591,13 @@ function inspect(point) {
   document.querySelector("#inspection").innerHTML = `<small>you are looking at</small><strong>${title}</strong><span>${detail}</span>`;
 }
 function render(now) {
-  const dt = Math.min(now - lastFrame, 40); lastFrame = now;
-  if (running) { elapsed += dt; updateOccupants(dt); }
+  const dt = Math.max(0, Math.min(now - lastFrame, 40)); lastFrame = now;
+  if (running && dt > 0) {
+    // Faster observation keeps the same short physics steps and simulation clock.
+    const steps = Math.ceil(dt * simulationSpeed / 40);
+    const step = dt * simulationSpeed / steps;
+    for (let i = 0; i < steps; i++) { elapsed += step; updateOccupants(step); }
+  }
   computeProximity(); computePlacement(); updateComparison(); updateClock(); drawPlan(); requestAnimationFrame(render);
 }
 

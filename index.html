@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>11:47 Laundromat</title>
-    <link rel="stylesheet" href="styles.css?v=20261105-nine1" />
+    <link rel="stylesheet" href="styles.css?v=20261105-agents1" />
   </head>
   <body>
     <main class="night-game">
@@ -25,12 +25,15 @@
           <button id="scene-view" class="selected" aria-pressed="true" type="button">room</button>
           <button id="plan-view" aria-pressed="false" type="button">floor plan</button>
           <button id="show-fields" aria-pressed="false" type="button">sight + attention</button>
+          <button id="agent-vision" class="selected" aria-pressed="true" type="button">their eyes</button>
+          <button id="shared-traces" aria-pressed="false" type="button">shared traces</button>
+          <button id="time-speed" type="button" aria-label="Simulation speed, currently 1 times">time 1×</button>
           <button id="camera-left" aria-label="Turn view left" type="button">↶</button>
           <button id="camera-right" aria-label="Turn view right" type="button">↷</button>
           <button id="camera-closer" aria-label="Zoom in" type="button">+</button>
           <button id="camera-farther" aria-label="Zoom out" type="button">−</button>
         </nav>
-        <p class="stage-caption">choose someone below, then click a tile to walk</p>
+        <p class="stage-caption">choose a person to follow what they see and remember</p>
 
         <div class="window-lettering" aria-hidden="true">
           <b>洗濯</b>
@@ -41,21 +44,23 @@
         <aside class="coin-panel" aria-label="Laundromat controls">
           <p>操作盤</p>
           <ol class="machine-guide">
-            <li>choose a person</li>
-            <li>click the floor to walk</li>
-            <li>try the lights and machines</li>
+            <li>choose a person below</li>
+            <li>watch their field of view</li>
+            <li>open their pocket map</li>
           </ol>
           <button id="coin" type="button"><span>100円</span>START A DRUM</button>
           <button id="lights" type="button"><i></i>CEILING LIGHTS</button>
           <button id="door" type="button"><i></i>FRONT DOOR</button>
           <button id="play" type="button"><i></i>PAUSE THE NIGHT</button>
-          <button id="walk-aisle" type="button">WALK TO THE AISLE</button>
+          <button id="walk-aisle" type="button">LOOK AROUND</button>
+          <button id="jam-dryer" type="button">JAM A DRYER</button>
+          <button id="crowd-more" type="button">9 MORE PEOPLE</button>
           <button id="reset" type="button">START OVER</button>
           <strong id="coin-count">0 COINS</strong>
         </aside>
 
         <aside class="people-board">
-          <h2>still here<br><small>9 people</small></h2>
+          <h2>still here<br><small id="population-count">9 people</small></h2>
           <div id="attention-register"></div>
           <div id="proximity-signals" class="proximity-signals" aria-live="polite"></div>
           <div class="relation-register">
@@ -72,7 +77,40 @@
           <strong>folding aisle</strong>
           <span>open floor</span>
         </div>
+        <div id="trace-key" class="trace-key" hidden>
+          <span>paths remembered together</span><i></i>
+          <small>one person <b>many people</b></small>
+          <p id="trace-summary"></p>
+        </div>
       </div>
+
+      <section class="field-book" aria-label="Selected agent's private memory and goals">
+        <div class="book-intro">
+          <span class="book-hand">記憶</span>
+          <p id="agent-role">customer</p>
+          <h2 id="agent-name">Mere's pocket map</h2>
+          <p id="agent-goal" class="book-goal">Find a washer, dry the clothes, fold them, then return.</p>
+          <p id="agent-thought" class="book-thought">I only know the tiles around me.</p>
+          <div class="book-actions">
+            <button id="agent-resume" type="button">let them decide</button>
+            <button id="agent-memory-toggle" aria-pressed="true" type="button">hide learned places</button>
+          </div>
+          <p class="book-caption">This map belongs to one person. Choose another name and it changes.</p>
+        </div>
+        <div class="book-map">
+          <canvas id="belief-map" role="img" aria-label="A private map showing only the selected agent's observed tiles and remembered landmarks"></canvas>
+          <p><span class="map-key unknown"></span>unknown <span class="map-key seen"></span>remembered <span class="map-key now"></span>seeing now <span class="map-key person"></span>last seen person</p>
+          <div id="agent-stats" class="book-stats"></div>
+        </div>
+        <div class="book-memory">
+          <p class="book-label">the task</p>
+          <div id="agent-progress" class="agent-progress"></div>
+          <p id="agent-criterion" class="book-criterion"></p>
+          <p class="book-label">places to remember</p>
+          <div id="agent-landmarks" class="agent-landmarks" aria-label="Remembered landmarks"></div>
+          <p id="agent-log" class="book-log"></p>
+        </div>
+      </section>
 
       <div class="receipt" aria-label="Distance comparison receipt">
         <div class="receipt-title">
@@ -118,7 +156,10 @@
             <p>Proximity rules use body distance, machine clearance, exit clearance and shared attention. The plan uses an approximate scale of 1.8 centimeters per drawing unit.</p>
             <p>Position recognizes between, adjacent and among. Movement uses start and end distances for toward and away, and the whole recorded path for past. Click an open tile to walk around furniture.</p>
             <p>The room is a stylized cutaway. Sight is computed on its ground plane with solid furniture footprints. It does not model over-the-table vision or human cognition.</p>
-            <p>Nine people have distinct, authored attention patterns. Five follow timed routines between laundry stations; they wait when another person occupies their next step. Moving someone yourself pauses their routine for 45 seconds.</p>
+            <p>Eight customers seek a washer, a dryer and a folding table. The attendant inspects machines and repairs faults. Each person has an individual map, a limited forward field of view, remembered landmarks, and a goal. Plans use their private maps, not the full scene.</p>
+            <p>The notebook shows personal knowledge. Its dark tiles are unknown, pale tiles are remembered, and bright tiles are visible now. Remembered machine states can become out of date. Click a remembered place to send that person there, or let them decide.</p>
+            <p>Targets are 240 simulation seconds per customer and 180 seconds for the attendant to inspect all 14 machines. Distance walked, time, coverage and repairs are measured. Machine cycles are deliberately compressed for the workshop; these are illustrative rules, not measured human behavior.</p>
+            <p>Add nine more people to compare a busy room with a quiet one. Shared traces show how many different people passed through each tile, plus counts at landmarks that several people discovered. This observer overlay is never passed into an individual's memory or planner.</p>
           </details>
         </div>
       </div>
@@ -128,7 +169,8 @@
         <p>night keeps moving even when the laundry does not</p>
       </footer>
     </main>
-    <script src="app.js?v=20261105-nine1"></script>
-    <script src="scene.js?v=20261105-nine1"></script>
+    <script src="app.js?v=20261105-agents1"></script>
+    <script src="scene.js?v=20261105-agents1"></script>
+    <script src="agents.js?v=20261105-agents1"></script>
   </body>
 </html>
