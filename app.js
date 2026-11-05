@@ -263,9 +263,10 @@ function pastReference(points) {
   return obstacles.filter(item => ["washer", "dryer", "table"].includes(item.kind)).map(item => {
     const center = machineCenter(item);
     const near = Math.min(...points.map(point => pointRectDistance(point, item)));
+    const approachesThenLeaves = near + 8 < Math.min(pointRectDistance(start,item),pointRectDistance(end,item));
     const crossesX = (start.x - center.x) * (end.x - center.x) < 0 && Math.min(start.y, end.y) < item.y + item.h + 60 && Math.max(start.y, end.y) > item.y - 60;
     const crossesY = (start.y - center.y) * (end.y - center.y) < 0 && Math.min(start.x, end.x) < item.x + item.w + 60 && Math.max(start.x, end.x) > item.x - 60;
-    return { item, near, crossed: crossesX || crossesY };
+    return { item, near, crossed: (crossesX || crossesY) && approachesThenLeaves };
   }).filter(result => result.crossed && result.near < 50).sort((a, b) => a.near - b.near)[0] || null;
 }
 function finishMovement(actor, points, reference) {
@@ -607,7 +608,9 @@ document.querySelector("#door").addEventListener("click", () => {
 });
 document.querySelector("#coin").addEventListener("click", () => {
   const machines = obstacles.map((item, index) => ({ item, index })).filter(({ item }) => item.kind === "washer" || item.kind === "dryer");
-  const next = machines[coins % machines.length]; coins += 1; activeMachines.add(next.index);
+  const next = machines[coins % machines.length];
+  if (placement.adjacent.some(item=>item.machine===next.item) && !activeMachines.has(next.index)) { note(`${next.item.label} waits for its open door to close. Move the person away first`); return; }
+  coins += 1; activeMachines.add(next.index);
   document.querySelector("#coin-count").textContent = `${coins} ${coins === 1 ? "COIN" : "COINS"}`; note(`${next.item.label} accepts the coin and begins to turn`);
 });
 document.querySelector("#reset").addEventListener("click", () => {
@@ -629,16 +632,17 @@ document.querySelector("#contradiction").addEventListener("click", () => {
 });
 canvas.addEventListener("pointerdown", event => {
   const rect = canvas.getBoundingClientRect(), point = world(event.clientX - rect.left, event.clientY - rect.top);
-  const hit = occupants.map(item => ({ item, d: distance(point, item) })).sort((a, b) => a.d - b.d)[0];
-  if (hit.d >= 28) return;
-  draggedOccupant = hit.item; dragStart = point; activeTrail = [{ ...point }]; dragReference = nearestMovementReference(point); pointerMoved = false; canvas.setPointerCapture(event.pointerId);
-  document.querySelector("#select-a").value = `occupant:${hit.item.id}`; note(`moving ${hit.item.name}`);
+  const person = typeof sceneHitTest === "function" ? sceneHitTest(event.clientX - rect.left, event.clientY - rect.top) : occupants.find(item => distance(point,item) < 28);
+  if (!person) return;
+  if (typeof walking !== "undefined") walking = null;
+  draggedOccupant = person; dragStart = {x:person.x,y:person.y}; activeTrail = [{ ...dragStart }]; dragReference = nearestMovementReference(dragStart); pointerMoved = false; canvas.setPointerCapture(event.pointerId);
+  document.querySelector("#select-a").value = `occupant:${person.id}`; note(`moving ${person.name}`);
 });
 canvas.addEventListener("pointermove", event => {
   if (!draggedOccupant) return;
   const rect = canvas.getBoundingClientRect(), raw = world(event.clientX - rect.left, event.clientY - rect.top);
   const point = { x: clamp(raw.x, WORLD.pad + 8, WORLD.w - WORLD.pad - 8), y: clamp(raw.y, WORLD.pad + 8, WORLD.h - WORLD.pad - 8) };
-  if (pointBlocked(point)) return;
+  if (pointBlocked(point) || segmentBlocked(draggedOccupant,point)) return;
   if (distance(point, dragStart) > 3) pointerMoved = true;
   if (!activeTrail.length || distance(activeTrail[activeTrail.length - 1], point) > 4) activeTrail.push({ ...point });
   draggedOccupant.baseX = point.x; draggedOccupant.baseY = point.y; draggedOccupant.x = point.x; draggedOccupant.y = point.y;
@@ -655,10 +659,15 @@ canvas.addEventListener("pointerup", event => {
 canvas.addEventListener("click", event => {
   if (pointerMoved) { pointerMoved = false; return; }
   const rect = canvas.getBoundingClientRect(), point = world(event.clientX - rect.left, event.clientY - rect.top);
-  const hit = occupants.map(item => ({ item, d: distance(point, item) })).sort((a, b) => a.d - b.d)[0];
-  const machineIndex = obstacles.findIndex(item => (item.kind === "washer" || item.kind === "dryer") && pointInRect(point, item));
-  if (hit.d < 26) { document.querySelector("#select-a").value = `occupant:${hit.item.id}`; updateComparison(true); note(`${hit.item.name} becomes point A`); }
-  else if (machineIndex >= 0) { activeMachines.has(machineIndex) ? activeMachines.delete(machineIndex) : activeMachines.add(machineIndex); note(`${obstacles[machineIndex].label} ${activeMachines.has(machineIndex) ? "begins to turn" : "comes to rest"}`); }
+  const person = typeof sceneHitTest === "function" ? sceneHitTest(event.clientX - rect.left, event.clientY - rect.top) : occupants.find(item => distance(point,item) < 26);
+  const machineIndex = typeof sceneMachineHitTest === "function" ? sceneMachineHitTest(event.clientX - rect.left,event.clientY - rect.top) : obstacles.findIndex(item => (item.kind === "washer" || item.kind === "dryer") && pointInRect(point, item));
+  if (person) { document.querySelector("#select-a").value = `occupant:${person.id}`; updateComparison(true); note(`${person.name} becomes point A`); }
+  else if (machineIndex >= 0) {
+    const machine=obstacles[machineIndex];
+    if(!activeMachines.has(machineIndex)&&placement.adjacent.some(item=>item.machine===machine)) note(`${machine.label} waits for its open door to close. Move the person away first`);
+    else {activeMachines.has(machineIndex) ? activeMachines.delete(machineIndex) : activeMachines.add(machineIndex); note(`${machine.label} ${activeMachines.has(machineIndex) ? "begins to turn" : "comes to rest"}`);}
+  }
+  else if (!pointBlocked(point) && typeof walkTo === "function" && point.x > 24 && point.x < 876 && point.y > 24 && point.y < 496) walkTo(point);
   inspect(point);
 });
 

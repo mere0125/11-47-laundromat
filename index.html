@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>11:47 Laundromat</title>
-    <link rel="stylesheet" href="styles.css?v=20261104-1" />
+    <link rel="stylesheet" href="styles.css?v=20261105-stage1" />
   </head>
   <body>
     <main class="night-game">
@@ -19,7 +19,18 @@
       </header>
 
       <div class="shop-window">
-        <canvas id="room" aria-label="Playable overhead view of a late night Japanese laundromat"></canvas>
+        <canvas id="room" tabindex="0" aria-label="Interactive cutaway laundromat. Drag a person or select a person and click an empty floor tile to walk. Arrow keys move the selected person."></canvas>
+
+        <nav class="view-controls" aria-label="Scene view">
+          <button id="scene-view" class="selected" aria-pressed="true" type="button">room</button>
+          <button id="plan-view" aria-pressed="false" type="button">floor plan</button>
+          <button id="show-fields" aria-pressed="false" type="button">sight + attention</button>
+          <button id="camera-left" aria-label="Turn view left" type="button">↶</button>
+          <button id="camera-right" aria-label="Turn view right" type="button">↷</button>
+          <button id="camera-closer" aria-label="Zoom in" type="button">+</button>
+          <button id="camera-farther" aria-label="Zoom out" type="button">−</button>
+        </nav>
+        <p class="stage-caption">pick someone up, or click a tile to walk there</p>
 
         <div class="window-lettering" aria-hidden="true">
           <b>洗濯</b>
@@ -30,20 +41,21 @@
         <aside class="coin-panel" aria-label="Laundromat controls">
           <p>操作盤</p>
           <ol class="machine-guide">
-            <li>drag a person across the floor</li>
-            <li>watch the relation stamps</li>
-            <li>follow the colored trail</li>
+            <li>choose a person</li>
+            <li>click the floor to walk</li>
+            <li>try the lights and machines</li>
           </ol>
           <button id="coin" type="button"><span>100円</span>START A DRUM</button>
           <button id="lights" type="button"><i></i>CEILING LIGHTS</button>
           <button id="door" type="button"><i></i>FRONT DOOR</button>
           <button id="play" type="button"><i></i>PAUSE THE NIGHT</button>
-          <button id="reset" type="button">RESET</button>
+          <button id="walk-aisle" type="button">WALK TO THE AISLE</button>
+          <button id="reset" type="button">START OVER</button>
           <strong id="coin-count">0 COINS</strong>
         </aside>
 
         <aside class="people-board">
-          <h2>who is still awake</h2>
+          <h2>still here</h2>
           <div id="attention-register"></div>
           <div id="proximity-signals" class="proximity-signals" aria-live="polite"></div>
           <div class="relation-register">
@@ -104,7 +116,8 @@
             <p>Attention distance measures the effort needed to move one attention pattern onto another across the room.</p>
             <p>The attention patterns are written for this simulation. They are not eye tracking.</p>
             <p>Proximity rules use body distance, machine clearance, exit clearance and shared attention. The plan uses an approximate scale of 1.8 centimeters per drawing unit.</p>
-            <p>Position recognizes between, adjacent and among. Movement compares the beginning and end of each drag to identify toward, away from and past.</p>
+            <p>Position recognizes between, adjacent and among. Movement uses start and end distances for toward and away, and the whole recorded path for past. Click an open tile to walk around furniture.</p>
+            <p>The room is a stylized cutaway. Sight is computed on its ground plane with solid furniture footprints. It does not model over-the-table vision or human cognition.</p>
           </details>
         </div>
       </div>
@@ -114,6 +127,7 @@
         <p>night keeps moving even when the laundry does not</p>
       </footer>
     </main>
-    <script src="app.js?v=20261104-1"></script>
+    <script src="app.js?v=20261105-stage1"></script>
+    <script src="scene.js?v=20261105-stage1"></script>
   </body>
 </html>

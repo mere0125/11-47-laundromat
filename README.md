@@ -32,4 +32,16 @@ The colored paths retain the last three movement events for fourteen seconds. Th
 
 The scene is drawn in browser code. Insert a coin to wake a drum, click a person to make them point A, and choose point B on the receipt.
 
+## The cutaway room
+
+The default view is a procedural 2.5D cutaway built in Canvas. Furniture, enamel casings, clothes, little paper figures, wall glazing, rain and light are drawn in code. No generated images, downloaded scene models, or external rendering libraries are used.
+
+Choose a person and click an open floor tile to walk there. Routing uses an eight-neighbor grid with collision-checked edges against the same furniture footprints used by the distance calculations. Dragging is also available. Arrow keys move the selected person when the canvas is focused. Camera controls turn and zoom the scene. The floor-plan button exposes the same world from overhead, and the sight/attention button toggles analytical fields.
+
+An adjacent person opens an idle machine door. A running machine stays locked, and a machine with its door open cannot start. The aisle lights up when someone is between the tables, and a shared ground shape appears for a three-person cluster.
+
+Rendering and measurement share the same ground coordinates. The visibility model still treats furniture footprints as solid plan obstructions. It is a stylized planar simulation, not a full 3D visibility, lighting, eye-tracking, or pedestrian-behavior model. Decorative overhead fixtures do not block walking.
+
+The pre-cutaway version is retained in the Git tag `before-spatial-stage-20261105`.
+
 **Mere Cui — Spatial AI, November 2026**
