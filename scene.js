@@ -5,6 +5,15 @@ let cameraAngle = -.22;
 let requestedAngle = -.22;
 let cameraZoom = 1;
 let walking = null;
+const roomWalks = new Map();
+const routineMemory = new Map();
+const roomRoutines = {
+  attendant: {delay:22000,speed:.033,stops:[{x:750,y:345,task:"checking drums",wait:17000},{x:590,y:205,task:"checking the room",wait:14000},{x:700,y:285,task:"checking drums",wait:21000}]},
+  bluecoat: {delay:12000,speed:.030,stops:[{x:240,y:100,task:"sorting clothes",wait:14000},{x:250,y:230,task:"carrying wash",wait:10000},{x:160,y:145,task:"loading wash",wait:21000}]},
+  student: {delay:18000,speed:.036,stops:[{x:450,y:235,task:"folding a shirt",wait:15000},{x:550,y:395,task:"checking phone",wait:13000},{x:556,y:224,task:"checking phone",wait:22000}]},
+  scarf: {delay:27000,speed:.029,stops:[{x:748,y:348,task:"waiting for a dryer",wait:22000},{x:590,y:278,task:"sorting laundry",wait:17000},{x:595,y:402,task:"sorting laundry",wait:16000}]},
+  raincoat: {delay:7000,speed:.032,stops:[{x:620,y:410,task:"buying detergent",wait:12000},{x:748,y:434,task:"waiting for a dryer",wait:18000},{x:530,y:467,task:"watching the rain",wait:22000}]}
+};
 let hoveredFloor = null;
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const garmentColors = ["#b988af", "#628d91", "#cfb686", "#788ab0"];
@@ -90,6 +99,10 @@ function stageFloor() {
     const x=20+(i*79)%865,y=518+(i*31)%85;
     wire([{x,y,z:-18},{x:x+35+(i%4)*15,y,z:-18}],rgba(i%2?colors.cyan:colors.red,.06+(i%4)*.02),1);
   }
+  for(let i=0;i<4;i++){
+    const x=115+i*190,y=553+(i%2)*23,phase=reducedMotion ? .35 : (elapsed*.00016+i*.23)%1;
+    ellipseWorld({x,y,z:-17},14+phase*15,4+phase*3,"rgba(0,0,0,0)",rgba("#8d82aa",(1-phase)*.17));
+  }
   if(doorOpen) {
     face([{x:475,y:493,z:1},{x:550,y:493,z:1},{x:650,y:600,z:-18},{x:430,y:600,z:-18}],"rgba(255,203,120,.08)",null);
   }
@@ -122,6 +135,11 @@ function stageFloor() {
   face([{x:63,y:27,z:36},{x:119,y:27,z:36},{x:118,y:27,z:95},{x:63,y:27,z:95}],"#d5c29e",null);
   labelAt("おしらせ",{x:69,y:28,z:82},"#5e4861",10);
   for(let i=0;i<4;i++) wire([{x:69,y:28,z:70-i*7},{x:108-i%2*12,y:28,z:70-i*7}],"#9d8292",.8);
+  face([{x:784,y:27,z:43},{x:841,y:27,z:43},{x:841,y:27,z:97},{x:784,y:27,z:97}],"#8b727a","#b19399",.8);
+  labelAt("24 時間",{x:790,y:28,z:80},"#e4c99f",11);
+  labelAt("100 円",{x:793,y:28,z:61},"#e4c99f",10);
+  // Two exposed water lines and warm brass collars on the rear wall.
+  for(const z of [25,31])wire([{x:34,y:29,z},{x:870,y:29,z}],"rgba(181,141,142,.4)",1.2);
   wire([{x:146,y:36,z:112},{x:265,y:36,z:112}],"#b39baa",.8);
   for(let i=0;i<4;i++){
     const x=158+i*27,z=103-(i%2)*7,sway=reducedMotion?0:Math.sin(elapsed*.0006+i)*1.3;
@@ -182,12 +200,20 @@ function machineModel(rect,index) {
   wire([{x:side,y:center.y-rect.h*.25,z:center.z+h*.12},{x:side,y:center.y-rect.h*.05,z:center.z+h*.24}],"rgba(220,235,244,.45)",1);
   const controlX=rect.x+(rect.x<450?rect.w-1:1);
   face([{x:controlX,y:rect.y+4,z:h-5},{x:controlX,y:rect.y+rect.h-4,z:h-5},{x:controlX,y:rect.y+rect.h-4,z:h-16},{x:controlX,y:rect.y+4,z:h-16}],"#29263f",null);
-  const status=blocked?colors.red:adj?colors.green:active?colors.yellow:"#a091a3";
+  const status=blocked?colors.red:adj&&!active?colors.green:active?colors.yellow:"#a091a3";
   wire([{x:controlX,y:rect.y+9,z:h-10},{x:controlX,y:rect.y+15,z:h-10}],status,2.2);
+  ellipseWorld({x:controlX,y:rect.y+rect.h-9,z:h-10},3,3,"#b1a7b7","#d4c5c1","side",0,.6);
+  for(const y of [rect.y+3,rect.y+rect.h-3]){
+    wire([{x:controlX,y,z:4},{x:controlX,y:y+2,z:6}],"rgba(229,218,216,.45)",.6);
+  }
+  wire([{x:rect.x+5,y:rect.y+4,z:h+1},{x:rect.x+rect.w-5,y:rect.y+4,z:h+1}],"rgba(255,246,221,.3)",.6);
   labelAt(rect.label,{x:rect.x+8,y:rect.y+rect.h*.64,z:h+1},"#352b46",Math.max(7,9*projectionInfo().scale));
   if(active) {
     lampGlow({x:side+(rect.x<450?17:-17),y:center.y,z:0},45,color,.12);
     for(let k=0;k<3;k++) groundRect(side+(rect.x<450?5:-25),rect.y+9+k*9,20,2,rgba(color,.12),1,null);
+    const angle=elapsed*.0015+index;
+    const reflection=Array.from({length:13},(_,i)=>{const t=-.6+i*.1;return {x:side,y:center.y+Math.cos(t+angle)*rect.h*.28,z:center.z+Math.sin(t+angle)*h*.24};});
+    wire(reflection,rgba(color,.65),1.6);
   }
   if(adj) {
     wire([{x:side,y:rect.y,z:2},{x:side,y:rect.y+rect.h,z:2}],status,3);
@@ -208,6 +234,11 @@ function furnitureModel(rect,index) {
       wire([{x:lx+5,y:y+14,z:48},{x:lx+5,y:y+32,z:48}],"rgba(255,243,217,.25)",.7);
     }
     labelAt(rect.label,{x:x+w-53,y:y+h-6,z:43},"#4c3b57",9);
+    if(index===14){
+      box(x+w-24,y+8,9,11,15,"#dec8b0","#9b929c","#898194",42);
+      box(x+w-22,y+10,5,7,3,"#6c8d89","#6c8d89","#526d70",57);
+      wire([{x:x+w-20,y:y+7,z:46},{x:x+w-20,y:y+7,z:53}],"#759797",1.2);
+    }
   } else if(rect.kind==="bench") {
     box(x+9,y+4,9,h-4,18,"#71647b","#514159","#3a3249");
     box(x+w-18,y+4,9,h-4,18,"#71647b","#514159","#3a3249");
@@ -244,21 +275,52 @@ function personModel(person,index) {
   const p=screen(person),s=projectionInfo().scale;
   const selected=document.querySelector("#select-a").value===`occupant:${person.id}`;
   const second=document.querySelector("#select-b").value===`occupant:${person.id}`;
-  const color=selected?colors.red:second?colors.blue:garmentColors[index];
-  ellipseWorld({...person,z:.5},12,7,"rgba(7,6,22,.45)",selected?colors.red:null);
+  const color=selected?colors.red:second?colors.blue:garmentColors[index%4];
+  const trip=walking?.person===person?walking:roomWalks.get(person.id);
+  const moving=!!trip&&!trip.yielding;
+  const seated=person.seated&&!trip&&distance(person,{x:person.homeX,y:person.homeY})<25;
+  const gesture=reducedMotion?0:Math.sin(elapsed*.0016+person.phase);
+  ellipseWorld({...person,z:.5},seated?16:12,7,"rgba(7,6,22,.45)",selected?colors.red:second?colors.blue:null);
   ctx.save();ctx.translate(p.x,p.y);ctx.scale(s,s);
-  const walk=walking?.person===person?Math.sin(elapsed*.013)*5:Math.sin(elapsed*.001+index)*.8;
+  const walk=moving?Math.sin(elapsed*.010+person.phase)*5:gesture*.35;
+  const bob=moving&&!reducedMotion?Math.abs(Math.sin(elapsed*.010+person.phase))*.9:0;
+  ctx.translate(0,-bob);
   // Small cut-paper silhouettes. Feet stay at their actual ground coordinates.
-  ctx.strokeStyle="#222037";ctx.lineWidth=5;ctx.lineCap="round";
-  ctx.beginPath();ctx.moveTo(-4,-15);ctx.lineTo(-5+walk,0);ctx.moveTo(4,-15);ctx.lineTo(5-walk,0);ctx.stroke();
-  ctx.fillStyle=index===2?"#7a9d9f":index===1?"#b17c94":index===3?"#887d9d":"#c5b39e";
-  ctx.beginPath();ctx.moveTo(-8,-35);ctx.quadraticCurveTo(0,-40,8,-35);ctx.lineTo(10,-14);ctx.quadraticCurveTo(0,-10,-10,-14);ctx.closePath();ctx.fill();
-  ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-7,-32);ctx.lineTo(-12,-18+walk*.6);ctx.moveTo(7,-32);ctx.lineTo(13,-20-walk*.6);ctx.stroke();
-  ctx.fillStyle="#e2bdaa";ctx.beginPath();ctx.ellipse(0,-42,6.5,8,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle="#2d263b";ctx.beginPath();ctx.ellipse(-1,-47,7,5,-.2,0,Math.PI*2);ctx.fill();
-  if(index===1){ctx.fillRect(-7,-46,4,15);ctx.fillRect(4,-46,3,12);}
-  if(index===0){ctx.fillStyle="#6a5779";ctx.fillRect(-4,-30,8,15);}
-  if(index===2){ctx.fillStyle="#d2c6aa";ctx.fillRect(-6,-26,12,10);}
+  ctx.strokeStyle="#2a263b";ctx.lineWidth=4.5;ctx.lineCap="round";
+  ctx.beginPath();
+  if(seated){ctx.moveTo(-4,-14);ctx.lineTo(-9,-7);ctx.lineTo(-11,1);ctx.moveTo(4,-14);ctx.lineTo(9,-7);ctx.lineTo(11,1);}
+  else{ctx.moveTo(-4,-15);ctx.lineTo(-5+walk,0);ctx.moveTo(4,-15);ctx.lineTo(5-walk,0);}
+  ctx.stroke();
+  ctx.fillStyle="#15172b";ctx.fillRect(-8+walk,0,7,2);ctx.fillRect(2-walk,0,7,2);
+  const lift=seated?6:0;ctx.translate(0,lift);
+  if(person.backpack){ctx.fillStyle="#56546f";ctx.fillRect(4,-35,10,19);ctx.strokeStyle="#aaa1a9";ctx.lineWidth=1;ctx.strokeRect(6,-32,6,12);}
+  ctx.fillStyle=person.coat;
+  ctx.beginPath();ctx.moveTo(-8,-35);ctx.quadraticCurveTo(0,-40,8,-35);ctx.lineTo(person.hood?12:10,-14);ctx.quadraticCurveTo(0,-10,person.hood?-12:-10,-14);ctx.closePath();ctx.fill();
+  ctx.strokeStyle="rgba(245,227,202,.26)";ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(0,-33);ctx.lineTo(0,-15);ctx.stroke();
+  const occupiedHands=!!person.prop&&!moving;
+  ctx.strokeStyle=person.coat;ctx.lineWidth=4.5;ctx.beginPath();ctx.moveTo(-7,-32);ctx.lineTo(occupiedHands?-7:-12,occupiedHands?-22+gesture:-18+walk*.6);ctx.moveTo(7,-32);ctx.lineTo(occupiedHands?7:13,occupiedHands?-22+gesture:-20-walk*.6);ctx.stroke();
+  const nod=person.task==="dozing"?4+gesture:0;
+  if(person.hood){ctx.fillStyle="#b79858";ctx.beginPath();ctx.ellipse(0,-42,9,10,0,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle=index===4||index===7?"#cda991":"#e2bdaa";ctx.beginPath();ctx.ellipse(nod*.4,-42+nod,6,7.5,nod*.04,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=person.hair;ctx.beginPath();ctx.ellipse(-1,-47+nod,6.5,4.5,-.2,0,Math.PI*2);ctx.fill();
+  if(person.longHair){ctx.fillRect(-7,-46,4,15);ctx.fillRect(4,-46,3,12);}
+  if(person.apron){ctx.fillStyle="#d2c6aa";ctx.fillRect(-6,-27,12,13);ctx.strokeStyle="#8c9293";ctx.lineWidth=1;ctx.strokeRect(-3,-23,6,5);}
+  if(person.scarf){ctx.fillStyle="#bc647d";ctx.fillRect(-8,-36,16,4);ctx.fillRect(4,-34,4,15);}
+  const propY=gesture*.8;
+  if(person.prop==="basket"){
+    ctx.fillStyle="#c6af99";ctx.fillRect(-13,-23+propY,26,13);ctx.strokeStyle="#77637d";ctx.lineWidth=1;
+    for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(-10+i*5,-21+propY);ctx.lineTo(-10+i*5,-12+propY);ctx.stroke();}
+    ctx.fillStyle="#a18bad";ctx.fillRect(-8,-27+propY,13,5);ctx.fillStyle="#799c9d";ctx.fillRect(2,-25+propY,9,3);
+  }
+  if(person.prop==="cloth"){ctx.fillStyle="#9e8bac";ctx.fillRect(-11,-23+propY,22,7);ctx.strokeStyle="#cebac6";ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(-8,-20+propY);ctx.lineTo(8,-20+propY);ctx.stroke();}
+  if(person.prop==="phone"){ctx.fillStyle="#29253c";ctx.fillRect(5,-27+propY,6,10);ctx.fillStyle="#b0b8d8";ctx.fillRect(6,-26+propY,4,7);}
+  if(person.prop==="book"){
+    ctx.fillStyle="#dfcda4";ctx.beginPath();ctx.moveTo(-13,-26);ctx.lineTo(0,-23);ctx.lineTo(13,-26);ctx.lineTo(12,-16);ctx.lineTo(0,-13);ctx.lineTo(-12,-16);ctx.closePath();ctx.fill();ctx.strokeStyle="#a28d91";ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(0,-23);ctx.lineTo(0,-14);ctx.stroke();
+  }
+  if(person.prop==="bag"){ctx.fillStyle="#93828f";ctx.fillRect(10,-16,12,16);ctx.strokeStyle="#c8aeb4";ctx.lineWidth=1;ctx.beginPath();ctx.arc(16,-16,4,Math.PI,0);ctx.stroke();}
+  if(person.prop==="umbrella"){
+    ctx.strokeStyle="#b0a3ad";ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(15,-30);ctx.lineTo(19,1);ctx.stroke();ctx.fillStyle="#596b86";ctx.beginPath();ctx.moveTo(16,-25);ctx.lineTo(24,-2);ctx.lineTo(16,-1);ctx.closePath();ctx.fill();
+  }
   ctx.restore();
 }
 
@@ -270,7 +332,7 @@ function selectedMarkers() {
     if(placed.some(p=>Math.abs(p.x-x)<135&&Math.abs(p.y-y)<40)){x+=80;y-=36;}
     placed.push({x,y});
     ctx.save();ctx.strokeStyle=rgba(color,.45);ctx.lineWidth=.7;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(foot.x,foot.y-4);ctx.lineTo(x,y+18);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="rgba(26,19,39,.78)";ctx.fillRect(x-64,y-14,128,35);
+    ctx.shadowColor="#110d25";ctx.shadowBlur=6;
     ctx.fillStyle=color;ctx.font="italic 16px Georgia";ctx.textAlign="center";ctx.fillText(letter,x,y);
     ctx.font="500 11px Avenir Next Condensed, Arial";ctx.fillStyle="#e9d6bd";ctx.fillText(ref.name||ref.source?.name||"place",x,y+15);ctx.restore();
   });
@@ -282,7 +344,8 @@ function groundRelations() {
     groundRect(323,176,245,138,"rgba(255,210,92,.07)",1,"rgba(255,210,92,.5)");
     labelAt("BETWEEN",{x:445,y:301,z:2},colors.yellow,10,"center");
   }
-  placement.among.forEach(group=>{
+  const drawnMembers=new Set();
+  placement.among.filter(group=>{if(group.some(p=>drawnMembers.has(p.id)))return false;group.forEach(p=>drawnMembers.add(p.id));return true;}).forEach(group=>{
     const points=[...group].sort((a,b)=>Math.atan2(a.y-260,a.x-450)-Math.atan2(b.y-260,b.x-450));
     face(points.map(p=>({...p,z:2})),"rgba(192,120,207,.15)","rgba(192,120,207,.7)",1.3);
     const center={x:group.reduce((v,p)=>v+p.x,0)/3,y:group.reduce((v,p)=>v+p.y,0)/3};
@@ -299,6 +362,8 @@ function groundRelations() {
   });
   drawMovement();
   if(walking) {ctx.setLineDash([2,5]);wire([walking.person,...walking.path],"rgba(255,239,199,.38)",1);ctx.setLineDash([]);}
+  const focus=document.querySelector("#select-a").value;
+  for(const trip of roomWalks.values()) if(focus===`occupant:${trip.person.id}`){ctx.setLineDash([2,6]);wire([trip.person,...trip.path],"rgba(255,239,199,.25)",.8);ctx.setLineDash([]);}
 }
 
 drawPlan = function () {
@@ -377,19 +442,78 @@ function walkTo(point) {
   if(ref?.type!=="occupant"){note("choose a person as A before asking them to walk");return;}
   const person=ref.source,path=walkingPath(person,point);
   if(!path){note("that tile is behind a solid object. Try the open aisle");return;}
+  holdPerson(person);person.activity="walking";
   walking={person,path,points:[{x:person.x,y:person.y}],reference:nearestMovementReference(person)};
   note(`${person.name} is walking`);
 }
-const breathe=updateOccupants;
-updateOccupants=function(dt){
-  if(!walking){if(!draggedOccupant)breathe(dt);return;}
-  const {person,path,points}=walking;
-  if(!path.length){points.push({x:person.x,y:person.y});const result=finishMovement(person,points,walking.reference);walking=null;updateComparison(true);note(result?`${person.name} moved ${result.kind.toLowerCase()} ${result.target.toLowerCase()}`:`${person.name} arrived`);return;}
-  const target=path[0],d=distance(person,target),travel=dt*.075;
-  if(d<=travel){person.x=target.x;person.y=target.y;path.shift();}else{person.x+=(target.x-person.x)/d*travel;person.y+=(target.y-person.y)/d*travel;}
-  person.baseX=person.x;person.baseY=person.y;
+function resetRoomRoutines(){
+  roomWalks.clear();routineMemory.clear();
+  occupants.forEach(person=>{person.activity=person.task;person.manualUntil=0;});
+  Object.entries(roomRoutines).forEach(([id,config])=>routineMemory.set(id,{next:config.delay,index:0}));
+  syncRoomRegister();
+}
+function holdPerson(person){
+  roomWalks.delete(person.id);person.manualUntil=elapsed+45000;person.activity="waiting for you";
+}
+function syncRoomRegister(){
+  const selected=document.querySelector("#select-a").value;
+  document.querySelectorAll("#attention-register [data-person]").forEach(button=>{
+    const person=occupants.find(p=>p.id===button.dataset.person);if(!person)return;
+    const activity=button.querySelector(".person-activity");if(activity&&activity.textContent!==person.activity)activity.textContent=person.activity;
+    button.title=`${person.name}: ${person.activity}`;
+    button.classList.toggle("selected-person",selected===`occupant:${person.id}`);button.setAttribute("aria-pressed",String(selected===`occupant:${person.id}`));
+  });
+}
+let lastRoomRegister=0;
+function advancePerson(trip,dt,manual=false){
+  const {person,path,points}=trip;
+  if(!path.length)return true;
+  const target=path[0],d=distance(person,target),travel=Math.min(d,dt*(manual ? .075 : trip.speed));
+  const next=d<.001?{...target}:{x:person.x+(target.x-person.x)/d*travel,y:person.y+(target.y-person.y)/d*travel};
+  // A short local wait avoids figure overlap; personal-space warnings still use 1.2 m.
+  const obstructing=occupants.find(other=>other!==person&&distance(next,other)<22&&distance(next,other)<distance(person,other));
+  if(obstructing){
+    trip.yielding=true;person.activity="letting someone pass";trip.waited=(trip.waited||0)+dt;
+    if(!manual&&trip.waited>4200)return true;
+    if(manual&&trip.waited>7000){note(`${person.name} is waiting for a clear tile. Choose another tile to continue`);return true;}
+    return false;
+  }
+  if(pointBlocked(next)||segmentBlocked(person,next)){path.length=0;return true;}
+  trip.yielding=false;trip.waited=0;person.activity="walking";
+  person.x=next.x;person.y=next.y;person.baseX=next.x;person.baseY=next.y;
+  if(d<=travel+.001)path.shift();
   if(distance(person,points.at(-1))>4)points.push({x:person.x,y:person.y});
+  return !path.length;
+}
+updateOccupants=function(dt){
+  if(walking){
+    const trip=walking;
+    if(advancePerson(trip,dt,true)){
+      trip.points.push({x:trip.person.x,y:trip.person.y});const result=finishMovement(trip.person,trip.points,trip.reference);walking=null;trip.person.activity="waiting here";trip.person.manualUntil=elapsed+45000;
+      updateComparison(true);if(result)note(`${trip.person.name} moved ${result.kind.toLowerCase()} ${result.target.toLowerCase()}`);
+    }
+  }
+  for(const [id,config] of Object.entries(roomRoutines)){
+    const person=occupants.find(p=>p.id===id),memory=routineMemory.get(id);
+    if(!memory||draggedOccupant===person||walking?.person===person||elapsed<person.manualUntil)continue;
+    const trip=roomWalks.get(id);
+    if(trip){
+      if(advancePerson(trip,dt)){
+        trip.points.push({x:person.x,y:person.y});
+        const selected=document.querySelector("#select-a").value===`occupant:${id}`;
+        if(selected)finishMovement(person,trip.points,trip.reference);
+        person.activity=distance(person,trip.stop)<20?trip.stop.task:"waiting for space";
+        roomWalks.delete(id);memory.next=elapsed+trip.stop.wait;memory.index=(memory.index+1)%config.stops.length;
+      }
+    }else if(elapsed>=memory.next){
+      const stop=config.stops[memory.index],path=walkingPath(person,stop);
+      if(path)roomWalks.set(id,{person,path,points:[{x:person.x,y:person.y}],reference:nearestMovementReference(person),stop,speed:config.speed});
+      else{memory.next=elapsed+8000;memory.index=(memory.index+1)%config.stops.length;}
+    }
+  }
+  if(elapsed-lastRoomRegister>400){syncRoomRegister();lastRoomRegister=elapsed;}
 };
+resetRoomRoutines();
 
 document.querySelector("#walk-aisle").addEventListener("click",()=>walkTo({x:445,y:246}));
 document.querySelector("#scene-view").addEventListener("click",()=>setView(false));
@@ -400,7 +524,9 @@ document.querySelector("#camera-left").addEventListener("click",()=>{requestedAn
 document.querySelector("#camera-right").addEventListener("click",()=>{requestedAngle=clamp(requestedAngle+.14,-.62,.08);});
 document.querySelector("#camera-closer").addEventListener("click",()=>{cameraZoom=clamp(cameraZoom+.08,.84,1.16);});
 document.querySelector("#camera-farther").addEventListener("click",()=>{cameraZoom=clamp(cameraZoom-.08,.84,1.16);});
-document.querySelector("#reset").addEventListener("click",()=>{walking=null;requestedAngle=-.22;cameraZoom=1;});
+document.querySelector("#reset").addEventListener("click",()=>{walking=null;requestedAngle=-.22;cameraZoom=1;lastRoomRegister=0;resetRoomRoutines();});
+document.querySelector("#attention-register").addEventListener("click",syncRoomRegister);
+document.querySelector("#select-a").addEventListener("change",syncRoomRegister);
 canvas.addEventListener("pointermove",event=>{const r=canvas.getBoundingClientRect();hoveredFloor=world(event.clientX-r.left,event.clientY-r.top);});
 canvas.addEventListener("pointerleave",()=>{hoveredFloor=null;});
 canvas.addEventListener("keydown",event=>{

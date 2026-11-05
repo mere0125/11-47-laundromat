@@ -30,11 +30,17 @@ const attractors = [
 ];
 
 const occupants = [
-  { id: "mere", name: "Mere folding", x: 246, y: 272, baseX: 246, baseY: 272, phase: .4, attention: [.52, .27, .06, .11, .04] },
-  { id: "window", name: "woman by window", x: 676, y: 215, baseX: 676, baseY: 215, phase: 2.1, attention: [.49, .28, .08, .10, .05] },
-  { id: "attendant", name: "night attendant", x: 701, y: 354, baseX: 701, baseY: 354, phase: 4.2, attention: [.08, .46, .09, .05, .32] },
-  { id: "sleeping", name: "sleeping man", x: 294, y: 406, baseX: 294, baseY: 406, phase: 5.5, attention: [.09, .06, .20, .57, .08] },
+  { id: "mere", name: "Mere folding", x: 246, y: 272, phase: .4, attention: [.52, .27, .06, .11, .04], coat: "#c5b39e", hair:"#34273e", task:"folding", activity:"folding", prop:"cloth" },
+  { id: "window", name: "woman by window", x: 676, y: 215, phase: 2.1, attention: [.49, .28, .08, .10, .05], coat:"#af7996", hair:"#32283f", task:"waiting", activity:"waiting", longHair:true },
+  { id: "attendant", name: "night attendant", x: 700, y: 285, phase: 4.2, attention: [.08, .46, .09, .05, .32], coat:"#7a9d9f", hair:"#bcb5c0", task:"checking drums", activity:"checking drums", apron:true },
+  { id: "sleeping", name: "sleeping man", x: 278, y: 409, phase: 5.5, attention: [.09, .06, .20, .57, .08], coat:"#887d9d", hair:"#32293e", task:"dozing", activity:"dozing", seated:true },
+  { id: "bluecoat", name: "blue coat", x: 160, y: 145, phase: 1.3, attention: [.12, .34, .08, .10, .36], coat:"#6b90b0", hair:"#372d42", task:"loading wash", activity:"loading wash", prop:"basket" },
+  { id: "student", name: "student", x: 556, y: 224, phase: 3.2, attention: [.16, .12, .05, .60, .07], coat:"#b48773", hair:"#2c2637", task:"checking phone", activity:"checking phone", prop:"phone", backpack:true },
+  { id: "reader", name: "reader", x: 380, y: 408, phase: 4.8, attention: [.43, .22, .10, .18, .07], coat:"#889c83", hair:"#c2b5a9", task:"reading", activity:"reading", prop:"book", seated:true },
+  { id: "scarf", name: "red scarf", x: 595, y: 402, phase: .8, attention: [.17, .60, .05, .09, .09], coat:"#a1879e", hair:"#4b3747", task:"sorting laundry", activity:"sorting laundry", scarf:true, prop:"bag" },
+  { id: "raincoat", name: "yellow raincoat", x: 530, y: 467, phase: 2.7, attention: [.15, .14, .47, .08, .16], coat:"#c7aa62", hair:"#4b3c42", task:"shaking off rain", activity:"shaking off rain", hood:true, prop:"umbrella" },
 ];
+occupants.forEach(person=>{person.baseX=person.x;person.baseY=person.y;person.homeX=person.x;person.homeY=person.y;});
 
 const zones = [
   { id: "folding-aisle", name: "folding aisle", x: 450, y: 252 },
@@ -538,7 +544,7 @@ function updateComparison(force = false) {
 function updateRegister() {
   document.querySelector("#attention-register").innerHTML = occupants.map(occupant => {
     const maximum = Math.max(...occupant.attention), index = occupant.attention.indexOf(maximum), attractor = attractors[index];
-    return `<button type="button" class="register-row" data-person="${occupant.id}" style="--register-color:${attractor.color}"><strong>${occupant.name}</strong><span>${attractor.short} ${Math.round(maximum * 100)}%</span><i><b style="width:${maximum * 100}%"></b></i></button>`;
+    return `<button type="button" class="register-row" data-person="${occupant.id}" aria-label="Select ${occupant.name}" style="--register-color:${attractor.color}"><strong>${occupant.name}</strong><span class="person-activity">${occupant.activity}</span><i><b style="width:${maximum * 100}%"></b></i></button>`;
   }).join("");
 }
 function updateProximityUI() {
@@ -616,8 +622,8 @@ document.querySelector("#coin").addEventListener("click", () => {
 document.querySelector("#reset").addEventListener("click", () => {
   elapsed = 0; running = true; lightsOn = true; neonOn = true; doorOpen = true; coins = 0;
   activeMachines.clear(); [1, 4, 9, 12].forEach(index => activeMachines.add(index));
-  [[246, 272], [676, 215], [701, 354], [294, 406]].forEach(([x, y], index) => {
-    occupants[index].baseX = x; occupants[index].baseY = y; occupants[index].x = x; occupants[index].y = y;
+  occupants.forEach(person => {
+    person.baseX=person.homeX;person.baseY=person.homeY;person.x=person.homeX;person.y=person.homeY;person.activity=person.task;
   });
   document.body.classList.remove("lights-off", "neon-off"); document.querySelector("#neon").classList.add("on");
   setControl("#play", "PAUSE THE NIGHT", true); setControl("#lights", "CEILING LIGHTS", true); setControl("#door", "FRONT DOOR", true);
@@ -639,7 +645,8 @@ canvas.addEventListener("pointerdown", event => {
   const rect = canvas.getBoundingClientRect(), point = world(event.clientX - rect.left, event.clientY - rect.top);
   const person = typeof sceneHitTest === "function" ? sceneHitTest(event.clientX - rect.left, event.clientY - rect.top) : occupants.find(item => distance(point,item) < 28);
   if (!person) return;
-  if (typeof walking !== "undefined") walking = null;
+  if (typeof walking !== "undefined") {if(walking)walking.person.activity="waiting here";walking = null;}
+  if (typeof holdPerson === "function") holdPerson(person);
   draggedOccupant = person; dragStart = {x:person.x,y:person.y}; activeTrail = [{ ...dragStart }]; dragReference = nearestMovementReference(dragStart); pointerMoved = false; canvas.setPointerCapture(event.pointerId);
   document.querySelector("#select-a").value = `occupant:${person.id}`; note(`moving ${person.name}`);
 });

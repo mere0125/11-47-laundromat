@@ -2,7 +2,7 @@
 
 An interactive distance study by Mere Cui for Spatial AI.
 
-Four people wait inside a late-night laundromat. Occupants have live locations, the floor can be queried, and the room compares two distinct spatial metrics.
+Nine people share a late-night laundromat. Occupants have live locations, the floor can be queried, and the room compares two distinct spatial metrics.
 
 ## Metrics
 
@@ -43,5 +43,15 @@ An adjacent person opens an idle machine door. A running machine stays locked, a
 Rendering and measurement share the same ground coordinates. The visibility model still treats furniture footprints as solid plan obstructions. It is a stylized planar simulation, not a full 3D visibility, lighting, eye-tracking, or pedestrian-behavior model. Decorative overhead fixtures do not block walking.
 
 The pre-cutaway version is retained in the Git tag `before-spatial-stage-20261105`.
+
+## A room with nine people
+
+The original four are joined by a blue coat carrying a wash basket, a student with a phone and backpack, a seated reader, a red scarf with a laundry bag, and a yellow raincoat with a folded umbrella. Each has its own normalized five-part attention distribution. The figures have different clothes, hair, props, and standing or seated poses.
+
+Five people follow authored station routines with staggered starts and different dwell times. The attendant checks the room, the blue coat carries laundry, the student visits the folding aisle, the red scarf waits near the dryers, and the raincoat goes to the soap machine and dryers. These are illustrative routines, not a calibrated model of human behavior.
+
+Autonomous routes use the same collision-checked grid as manual walking. A moving figure yields if its next step would bring it within 22 plan units of another person; after a longer wait, an autonomous figure waits before trying its next station. This visual collision threshold is separate from the existing 1.2-meter personal-space warning. Taking manual control holds that person's routine for 45 simulation seconds. Pause freezes both the room clock and routine timing; Start Over restores all nine original positions and all routine timers.
+
+The nine-person register shows each person's current activity and remains selectable. It is three columns on desktop and two on narrow screens. Both distance selectors include all nine people.
 
 **Mere Cui — Spatial AI, November 2026**

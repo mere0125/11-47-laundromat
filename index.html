@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>11:47 Laundromat</title>
-    <link rel="stylesheet" href="styles.css?v=20261105-stage2" />
+    <link rel="stylesheet" href="styles.css?v=20261105-nine1" />
   </head>
   <body>
     <main class="night-game">
@@ -30,7 +30,7 @@
           <button id="camera-closer" aria-label="Zoom in" type="button">+</button>
           <button id="camera-farther" aria-label="Zoom out" type="button">−</button>
         </nav>
-        <p class="stage-caption">pick someone up, or click a tile to walk there</p>
+        <p class="stage-caption">choose someone below, then click a tile to walk</p>
 
         <div class="window-lettering" aria-hidden="true">
           <b>洗濯</b>
@@ -55,7 +55,7 @@
         </aside>
 
         <aside class="people-board">
-          <h2>still here</h2>
+          <h2>still here<br><small>9 people</small></h2>
           <div id="attention-register"></div>
           <div id="proximity-signals" class="proximity-signals" aria-live="polite"></div>
           <div class="relation-register">
@@ -118,6 +118,7 @@
             <p>Proximity rules use body distance, machine clearance, exit clearance and shared attention. The plan uses an approximate scale of 1.8 centimeters per drawing unit.</p>
             <p>Position recognizes between, adjacent and among. Movement uses start and end distances for toward and away, and the whole recorded path for past. Click an open tile to walk around furniture.</p>
             <p>The room is a stylized cutaway. Sight is computed on its ground plane with solid furniture footprints. It does not model over-the-table vision or human cognition.</p>
+            <p>Nine people have distinct, authored attention patterns. Five follow timed routines between laundry stations; they wait when another person occupies their next step. Moving someone yourself pauses their routine for 45 seconds.</p>
           </details>
         </div>
       </div>
@@ -127,7 +128,7 @@
         <p>night keeps moving even when the laundry does not</p>
       </footer>
     </main>
-    <script src="app.js?v=20261105-stage2"></script>
-    <script src="scene.js?v=20261105-stage2"></script>
+    <script src="app.js?v=20261105-nine1"></script>
+    <script src="scene.js?v=20261105-nine1"></script>
   </body>
 </html>
