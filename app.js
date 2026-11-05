@@ -538,7 +538,7 @@ function updateComparison(force = false) {
 function updateRegister() {
   document.querySelector("#attention-register").innerHTML = occupants.map(occupant => {
     const maximum = Math.max(...occupant.attention), index = occupant.attention.indexOf(maximum), attractor = attractors[index];
-    return `<div class="register-row" style="--register-color:${attractor.color}"><strong>${occupant.name}</strong><span>${attractor.short} ${Math.round(maximum * 100)}%</span><i><b style="width:${maximum * 100}%"></b></i></div>`;
+    return `<button type="button" class="register-row" data-person="${occupant.id}" style="--register-color:${attractor.color}"><strong>${occupant.name}</strong><span>${attractor.short} ${Math.round(maximum * 100)}%</span><i><b style="width:${maximum * 100}%"></b></i></button>`;
   }).join("");
 }
 function updateProximityUI() {
@@ -627,6 +627,11 @@ document.querySelector("#reset").addEventListener("click", () => {
 });
 document.querySelector("#select-a").addEventListener("change", () => updateComparison(true));
 document.querySelector("#select-b").addEventListener("change", () => updateComparison(true));
+document.querySelector("#attention-register").addEventListener("click",event=>{
+  const button=event.target.closest("[data-person]");if(!button)return;
+  document.querySelector("#select-a").value=`occupant:${button.dataset.person}`;updateComparison(true);
+  note(`${occupants.find(item=>item.id===button.dataset.person).name} becomes point A`);
+});
 document.querySelector("#contradiction").addEventListener("click", () => {
   document.querySelector("#select-a").value = "occupant:mere"; document.querySelector("#select-b").value = "occupant:window"; updateComparison(true);
 });

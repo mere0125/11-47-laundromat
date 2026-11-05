@@ -84,7 +84,8 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--yellow); o
   box-shadow: 5px 5px 0 rgba(4,3,15,.35);
 }
 .people-board h2 { margin: 0 0 8px; color: var(--cyan); font: 400 12px "Yu Mincho", serif; }
-.register-row { display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: center; padding: 4px 0; border-top: 1px solid rgba(255,255,255,.11); }
+.register-row { display: grid; width:100%; text-align:left; background:transparent; border:0; grid-template-columns: 1fr auto; gap: 4px; align-items: center; padding: 4px 0; border-top: 1px solid rgba(255,255,255,.11); }
+.register-row:hover strong { color:var(--yellow); }
 .register-row strong { overflow: hidden; color: #e4d7f1; font: 600 7px var(--print); text-overflow: ellipsis; white-space: nowrap; }
 .register-row span { color: #988aac; font: 600 6px var(--print); letter-spacing: .04em; }
 .register-row i { grid-column: 1 / -1; height: 2px; background: #342946; }
