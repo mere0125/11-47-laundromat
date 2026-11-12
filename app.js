@@ -1,5 +1,6 @@
 const canvas = document.querySelector("#room");
 const ctx = canvas.getContext("2d");
+const roomPage = document.querySelector("#laundromat");
 
 const WORLD = { w: 900, h: 520, pad: 24 };
 const colors = {
@@ -593,6 +594,10 @@ function inspect(point) {
 }
 function render(now) {
   const dt = Math.max(0, Math.min(now - lastFrame, 40)); lastFrame = now;
+  if (roomPage?.hidden) {
+    requestAnimationFrame(render);
+    return;
+  }
   if (running && dt > 0) {
     // Faster observation keeps the same short physics steps and simulation clock.
     const steps = Math.ceil(dt * simulationSpeed / 40);

@@ -5,17 +5,34 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>11:47 Laundromat</title>
     <link rel="stylesheet" href="styles.css?v=20261112-memory" />
+    <link rel="stylesheet" href="opening.css?v=1" />
   </head>
   <body>
-    <main class="night-game">
+    <main id="opening" class="opening">
+      <div class="opening-copy">
+        <h1><span>11:47</span> Laundromat</h1>
+        <p>Mere still needs a free washer. Inside, the night attendant has one last round to make.</p>
+      </div>
+      <div class="storefront">
+        <canvas id="storefront-art" width="1640" height="1280" role="img" aria-label="A lit laundromat on a wet street, with a repair notice taped to the glass door."></canvas>
+        <button id="enter-laundromat" class="entry-door" type="button">
+          <span>Push the door</span>
+        </button>
+      </div>
+    </main>
+
+    <main id="laundromat" class="night-game" hidden>
       <header class="shop-sign">
         <button id="neon" class="neon-switch" type="button" aria-label="Switch neon sign">ネオン</button>
         <div class="sign-copy">
           <p>午前零時前の最後の洗濯</p>
-          <h1><span>11:47</span> コインランドリー</h1>
+          <h1 id="room-title" tabindex="-1"><span>11:47</span> コインランドリー</h1>
           <small>the last wash before midnight</small>
         </div>
-        <time id="clock">11:47:00 PM</time>
+        <div class="shop-time">
+          <time id="clock">11:47:00 PM</time>
+          <button id="step-outside" type="button">Step outside</button>
+        </div>
       </header>
 
       <div class="shop-window">
@@ -187,9 +204,10 @@
         <p>night keeps moving even when the laundry does not</p>
       </footer>
     </main>
-    <script src="app.js?v=20261112-memory"></script>
+    <script src="app.js?v=20261112-door"></script>
     <script src="scene.js?v=20261112-memory"></script>
     <script src="agents.js?v=20261112-memory"></script>
     <script src="memory-view.js?v=20261112-memory"></script>
+    <script src="opening.js?v=1"></script>
   </body>
 </html>
