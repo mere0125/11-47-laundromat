@@ -1,5 +1,7 @@
 /* The room and the analytical plan share one ground plane and one set of rules. */
 let planView = false;
+let memoryView = false;
+let memoryProjection = null;
 let fieldsVisible = false;
 let cameraAngle = -.22;
 let requestedAngle = -.22;
@@ -19,6 +21,7 @@ const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const garmentColors = ["#b988af", "#628d91", "#cfb686", "#788ab0"];
 
 function projectionInfo() {
+  if (memoryView && memoryProjection) return memoryProjection;
   const width = canvas.clientWidth, height = canvas.clientHeight;
   const compact = width < 760;
   const right = compact ? 16 : 175;
@@ -85,7 +88,7 @@ function stageFloor() {
   const w=canvas.clientWidth,h=canvas.clientHeight;
   ctx.fillStyle="#100e23"; ctx.fillRect(0,0,w,h);
   const back=ctx.createRadialGradient(w*.48,h*.55,5,w*.5,h*.5,w*.65);
-  back.addColorStop(0,"#27203e"); back.addColorStop(1,"#100e23"); ctx.fillStyle=back;ctx.fillRect(0,0,w,h);
+  back.addColorStop(0,"#332644"); back.addColorStop(1,"#100e23"); ctx.fillStyle=back;ctx.fillRect(0,0,w,h);
   ellipseWorld({x:450,y:300,z:-36},510,320,"rgba(0,0,0,.26)",null);
   box(12,12,876,496,20,"#38334e","#252039","#211e32",-20);
   for(let y=24;y<496;y+=28) for(let x=24;x<876;x+=28) {
@@ -93,6 +96,16 @@ function stageFloor() {
     const fill=seed<10?"#514454":seed<44?"#494051":seed<76?"#453d50":"#4c4356";
     groundRect(x,y,27.3,27.3,fill,.1,"rgba(154,136,157,.12)");
   }
+  // Keep the light on the tile plane, underneath the objects and people.
+  ctx.save();
+  pathWorld([{x:24,y:24},{x:876,y:24},{x:876,y:497},{x:24,y:497}],true);
+  ctx.clip();
+  if (lightsOn) {
+    lampGlow({x:280,y:191},235,"#e8b986",.22);
+    lampGlow({x:755,y:150},220,"#81cad1",.16);
+  }
+  if (neonOn) lampGlow({x:568,y:477},210,"#f47b9e",.21);
+  ctx.restore();
   // The rain and the platform sit outside the occupiable room.
   groundRect(10,508,878,100,"#1c1a30",-19,null);
   for(let i=0;i<32;i++) {
@@ -367,7 +380,11 @@ function groundRelations() {
 }
 
 drawPlan = function () {
-  cameraAngle+=(requestedAngle-cameraAngle)*.09;
+  cameraAngle += (requestedAngle - cameraAngle) * (reducedMotion ? 1 : .09);
+  if (memoryView) {
+    drawMemoryScene(selectedMind());
+    return;
+  }
   if(planView){drawTileGrid();if(fieldsVisible){drawIsovists();drawAttentionThreads();}obstacles.forEach(drawObstacle);drawAttractors();drawMovement();drawOccupants();drawProximity();drawPlacement();return;}
   stageFloor();groundRelations();
   const objects=obstacles.map((rect,index)=>({depth:screen({x:rect.x+rect.w/2,y:rect.y+rect.h}).y,draw:()=>furnitureModel(rect,index)}));
@@ -516,9 +533,27 @@ updateOccupants=function(dt){
 resetRoomRoutines();
 
 document.querySelector("#walk-aisle").addEventListener("click",()=>walkTo({x:445,y:246}));
-document.querySelector("#scene-view").addEventListener("click",()=>setView(false));
-document.querySelector("#plan-view").addEventListener("click",()=>setView(true));
-function setView(plan){planView=plan;document.querySelector("#scene-view").classList.toggle("selected",!plan);document.querySelector("#plan-view").classList.toggle("selected",plan);document.querySelector("#scene-view").setAttribute("aria-pressed",String(!plan));document.querySelector("#plan-view").setAttribute("aria-pressed",String(plan));}
+for (const mode of ["room", "memory", "plan"]) {
+  const id = mode === "room" ? "scene" : mode;
+  document.querySelector(`#${id}-view`).addEventListener("click", () => setView(mode));
+}
+function setView(mode) {
+  planView = mode === "plan";
+  memoryView = mode === "memory";
+  memoryProjection = null;
+  document.querySelector(".scene-area").dataset.view = mode;
+  for (const [id, view] of [["scene", "room"], ["plan", "plan"], ["memory", "memory"]]) {
+    const button = document.querySelector(`#${id}-view`);
+    button.classList.toggle("selected", view === mode);
+    button.setAttribute("aria-pressed", String(view === mode));
+  }
+  document.querySelector("#show-fields").disabled = memoryView;
+  document.querySelector("#shared-traces").disabled = memoryView;
+  document.querySelector("#agent-vision").textContent = memoryView ? "view direction" : "view cone";
+  canvas.setAttribute("aria-label", memoryView
+    ? "Selected person's memory. Choose a person in the list below."
+    : "Interactive laundromat. Select or drag a person, or click a floor tile to walk.");
+}
 document.querySelector("#show-fields").addEventListener("click",event=>{fieldsVisible=!fieldsVisible;event.currentTarget.classList.toggle("selected",fieldsVisible);event.currentTarget.setAttribute("aria-pressed",String(fieldsVisible));});
 document.querySelector("#camera-left").addEventListener("click",()=>{requestedAngle=clamp(requestedAngle-.14,-.62,.08);});
 document.querySelector("#camera-right").addEventListener("click",()=>{requestedAngle=clamp(requestedAngle+.14,-.62,.08);});
@@ -530,6 +565,7 @@ document.querySelector("#select-a").addEventListener("change",syncRoomRegister);
 canvas.addEventListener("pointermove",event=>{const r=canvas.getBoundingClientRect();hoveredFloor=world(event.clientX-r.left,event.clientY-r.top);});
 canvas.addEventListener("pointerleave",()=>{hoveredFloor=null;});
 canvas.addEventListener("keydown",event=>{
+  if (memoryView) return;
   const delta={ArrowLeft:[-20,0],ArrowRight:[20,0],ArrowUp:[0,-20],ArrowDown:[0,20]}[event.key];if(!delta)return;
   event.preventDefault();const p=referent(document.querySelector("#select-a").value);if(p?.source)walkTo({x:clamp(p.x+delta[0],32,868),y:clamp(p.y+delta[1],32,488)});
 });

@@ -69,6 +69,7 @@ let proximity = { body: [], machine: [], attention: [], exit: [] };
 let draggedOccupant = null;
 let pointerMoved = false;
 let dragStart = null;
+let dragOrigin = null;
 let attentionPairCache = null;
 let placement = { between: [], adjacent: [], among: [] };
 let activeTrail = [];
@@ -648,34 +649,56 @@ document.querySelector("#contradiction").addEventListener("click", () => {
   document.querySelector("#select-a").value = "occupant:mere"; document.querySelector("#select-b").value = "occupant:window"; updateComparison(true);
 });
 canvas.addEventListener("pointerdown", event => {
+  if (typeof memoryView !== "undefined" && memoryView) return;
   const rect = canvas.getBoundingClientRect(), point = world(event.clientX - rect.left, event.clientY - rect.top);
   const person = typeof sceneHitTest === "function" ? sceneHitTest(event.clientX - rect.left, event.clientY - rect.top) : occupants.find(item => distance(point,item) < 28);
   if (!person) return;
-  if (typeof walking !== "undefined") {if(walking)walking.person.activity="waiting here";walking = null;}
-  if (typeof holdPerson === "function") holdPerson(person);
+  dragOrigin = point;
   draggedOccupant = person; dragStart = {x:person.x,y:person.y}; activeTrail = [{ ...dragStart }]; dragReference = nearestMovementReference(dragStart); pointerMoved = false; canvas.setPointerCapture(event.pointerId);
-  document.querySelector("#select-a").value = `occupant:${person.id}`; note(`moving ${person.name}`);
+  document.querySelector("#select-a").value = `occupant:${person.id}`;
 });
 canvas.addEventListener("pointermove", event => {
   if (!draggedOccupant) return;
   const rect = canvas.getBoundingClientRect(), raw = world(event.clientX - rect.left, event.clientY - rect.top);
-  const point = { x: clamp(raw.x, WORLD.pad + 8, WORLD.w - WORLD.pad - 8), y: clamp(raw.y, WORLD.pad + 8, WORLD.h - WORLD.pad - 8) };
+  if (!pointerMoved && distance(raw, dragOrigin) < 5) return;
+  const point = {
+    x: clamp(dragStart.x + raw.x - dragOrigin.x, WORLD.pad + 8, WORLD.w - WORLD.pad - 8),
+    y: clamp(dragStart.y + raw.y - dragOrigin.y, WORLD.pad + 8, WORLD.h - WORLD.pad - 8)
+  };
   if (pointBlocked(point) || segmentBlocked(draggedOccupant,point)) return;
-  if (distance(point, dragStart) > 3) pointerMoved = true;
+  if (!pointerMoved) {
+    if (typeof walking !== "undefined" && walking) {
+      walking.person.activity = "waiting here";
+      walking = null;
+    }
+    if (typeof holdPerson === "function") holdPerson(draggedOccupant);
+    pointerMoved = true;
+    note(`moving ${draggedOccupant.name}`);
+  }
   if (!activeTrail.length || distance(activeTrail[activeTrail.length - 1], point) > 4) activeTrail.push({ ...point });
   draggedOccupant.baseX = point.x; draggedOccupant.baseY = point.y; draggedOccupant.x = point.x; draggedOccupant.y = point.y;
   computeProximity(); computePlacement(); updateProximityUI(); updateRelationUI();
 });
 canvas.addEventListener("pointerup", event => {
   if (!draggedOccupant) return;
-  const actor = draggedOccupant, name = actor.name, eventResult = finishMovement(actor, activeTrail, dragReference);
-  draggedOccupant = null; dragStart = null; dragReference = null; activeTrail = [];
+  const actor = draggedOccupant, name = actor.name;
+  const eventResult = pointerMoved ? finishMovement(actor, activeTrail, dragReference) : null;
+  draggedOccupant = null; dragStart = null; dragOrigin = null; dragReference = null; activeTrail = [];
   if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
   computePlacement(); updateComparison(true); updateRelationUI();
   note(eventResult ? `${name} moved ${eventResult.kind.toLowerCase()} ${eventResult.target.toLowerCase()}` : pointerMoved ? `${name} waits in a new place` : `${name} becomes point A`);
 });
+canvas.addEventListener("pointercancel", () => {
+  draggedOccupant = null;
+  dragStart = null;
+  dragOrigin = null;
+  dragReference = null;
+  activeTrail = [];
+  pointerMoved = false;
+});
 canvas.addEventListener("click", event => {
   if (pointerMoved) { pointerMoved = false; return; }
+  if (typeof memoryView !== "undefined" && memoryView) return;
   const rect = canvas.getBoundingClientRect(), point = world(event.clientX - rect.left, event.clientY - rect.top);
   const person = typeof sceneHitTest === "function" ? sceneHitTest(event.clientX - rect.left, event.clientY - rect.top) : occupants.find(item => distance(point,item) < 26);
   const machineIndex = typeof sceneMachineHitTest === "function" ? sceneMachineHitTest(event.clientX - rect.left,event.clientY - rect.top) : obstacles.findIndex(item => (item.kind === "washer" || item.kind === "dryer") && pointInRect(point, item));

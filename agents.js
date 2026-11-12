@@ -32,7 +32,7 @@ function rememberEvent(mind,text){
 function makeMind(person,index){
   const staff=person.id==='attendant';
   return {person,index,role:staff?'attendant':'customer',range:staff?250:210,fov:(staff?125:100)*Math.PI/180,
-    heading:Math.atan2(260-person.y,450-person.x),belief:new Uint8Array(BELIEF.cols*BELIEF.rows),visible:new Set(),
+    heading:Math.atan2(260-person.y,450-person.x),belief:new Uint8Array(BELIEF.cols*BELIEF.rows),visible:new Set(),visibleObjects:new Set(),
     objects:new Map(),landmarks:new Map(),neighbors:[],peopleMemory:new Map(),trail:[],visits:new Map(),events:[],inspected:new Set(),
     phase:staff?'inspect':'seek-wash',completed:new Set(),path:[],target:null,trip:null,scan:2.3,
     nextSense:-Infinity,nextDecision:1200+index*170,manualUntil:0,manualTarget:null,
@@ -90,6 +90,7 @@ function registerLandmark(mind,id,data){
 }
 function senseAgent(mind){
   mind.visible.clear();
+  mind.visibleObjects.clear();
   const p=mind.person,step=BELIEF.step;
   const minX=clamp(Math.floor((p.x-mind.range)/step),0,BELIEF.cols-1),maxX=clamp(Math.ceil((p.x+mind.range)/step),0,BELIEF.cols-1);
   const minY=clamp(Math.floor((p.y-mind.range)/step),0,BELIEF.rows-1),maxY=clamp(Math.ceil((p.y+mind.range)/step),0,BELIEF.rows-1);
@@ -100,6 +101,7 @@ function senseAgent(mind){
   mind.belief[cellIndex(p)]=1;mind.visible.add(cellIndex(p));
   obstacles.forEach((rect,index)=>{
     if(!sensedRectPoint(mind,rect))return;
+    mind.visibleObjects.add(index);
     // Object recognition reveals this object's own extent, never a hidden neighbor.
     const copy={x:rect.x,y:rect.y,w:rect.w,h:rect.h,kind:rect.kind,label:rect.label};
     if(!mind.objects.has(index))mind.edges.clear();
@@ -487,6 +489,16 @@ function updateNotebook(force=false){
   if(!force&&elapsed-lastNotebook<300)return;
   lastNotebook=elapsed;const mind=selectedMind();if(!mind)return;
   const person=mind.person,staff=mind.role==='attendant',usedTime=(mind.finishedAt??elapsed)-mind.spawnedAt;
+  const focusName = document.querySelector('#focus-name');
+  const focusRole = document.querySelector('#focus-role');
+  const focusDecision = document.querySelector('#focus-decision');
+  const focusDestination = document.querySelector('#focus-destination');
+  const destination = mind.path.length ? mind.landmarks.get(mind.target?.id) : null;
+  focusName.textContent = staff ? 'Night attendant' : person.name.replace(' folding', '');
+  focusRole.textContent = staff ? 'Staff' : 'Customer';
+  focusDecision.textContent = mind.decision;
+  focusDestination.hidden = !destination;
+  focusDestination.textContent = destination ? `Heading to ${destination.name}` : '';
   const known=mind.belief.reduce((n,value,k)=>n+(value&&legalPoint(cellPoint(k))?1:0),0);
   let total=0;for(let k=0;k<mind.belief.length;k++)if(legalPoint(cellPoint(k)))total++;
   document.querySelector('#agent-role').textContent=staff?'night attendant':'customer';

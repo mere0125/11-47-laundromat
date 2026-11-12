@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>11:47 Laundromat</title>
-    <link rel="stylesheet" href="styles.css?v=20261105-agents1" />
+    <link rel="stylesheet" href="styles.css?v=20261112-memory" />
   </head>
   <body>
     <main class="night-game">
@@ -19,13 +19,15 @@
       </header>
 
       <div class="shop-window">
+        <div class="scene-area" data-view="room">
         <canvas id="room" tabindex="0" aria-label="Interactive cutaway laundromat. Drag a person or select a person and click an empty floor tile to walk. Arrow keys move the selected person."></canvas>
 
         <nav class="view-controls" aria-label="Scene view">
           <button id="scene-view" class="selected" aria-pressed="true" type="button">room</button>
+          <button id="memory-view" aria-pressed="false" type="button">memory</button>
           <button id="plan-view" aria-pressed="false" type="button">floor plan</button>
           <button id="show-fields" aria-pressed="false" type="button">sight + attention</button>
-          <button id="agent-vision" class="selected" aria-pressed="true" type="button">their eyes</button>
+          <button id="agent-vision" class="selected" aria-pressed="true" type="button">view cone</button>
           <button id="shared-traces" aria-pressed="false" type="button">shared traces</button>
           <button id="time-speed" type="button" aria-label="Simulation speed, currently 1 times">time 1×</button>
           <button id="camera-left" aria-label="Turn view left" type="button">↶</button>
@@ -33,7 +35,12 @@
           <button id="camera-closer" aria-label="Zoom in" type="button">+</button>
           <button id="camera-farther" aria-label="Zoom out" type="button">−</button>
         </nav>
-        <p class="stage-caption">choose a person to follow what they see and remember</p>
+        <p class="stage-caption">Choose a person in the room or in the list below.</p>
+        <div class="memory-legend" aria-label="Memory view legend">
+          <span><i class="visible-key"></i>Seeing now</span>
+          <span><i class="remembered-key"></i>Remembered</span>
+          <span><i class="route-key"></i>Planned route</span>
+        </div>
 
         <div class="window-lettering" aria-hidden="true">
           <b>洗濯</b>
@@ -59,6 +66,27 @@
           <strong id="coin-count">0 COINS</strong>
         </aside>
 
+        <div id="inspection" class="floor-note" aria-live="polite">
+          <small>you are looking at</small>
+          <strong>folding aisle</strong>
+          <span>open floor</span>
+        </div>
+        <div id="trace-key" class="trace-key" hidden>
+          <span>paths remembered together</span><i></i>
+          <small>one person <b>many people</b></small>
+          <p id="trace-summary"></p>
+        </div>
+        </div>
+
+        <div class="scene-focus" aria-label="Selected person's current decision">
+          <div class="focus-person">
+            <span id="focus-role">Customer</span>
+            <strong id="focus-name">Mere</strong>
+          </div>
+          <p id="focus-decision">I know my starting point. Looking around.</p>
+          <p id="focus-destination" hidden></p>
+        </div>
+
         <aside class="people-board">
           <h2>still here<br><small id="population-count">9 people</small></h2>
           <div id="attention-register"></div>
@@ -72,16 +100,6 @@
           <p id="active-note">drag a person, or click a machine</p>
         </aside>
 
-        <div id="inspection" class="floor-note" aria-live="polite">
-          <small>you are looking at</small>
-          <strong>folding aisle</strong>
-          <span>open floor</span>
-        </div>
-        <div id="trace-key" class="trace-key" hidden>
-          <span>paths remembered together</span><i></i>
-          <small>one person <b>many people</b></small>
-          <p id="trace-summary"></p>
-        </div>
       </div>
 
       <section class="field-book" aria-label="Selected agent's private memory and goals">
@@ -169,8 +187,9 @@
         <p>night keeps moving even when the laundry does not</p>
       </footer>
     </main>
-    <script src="app.js?v=20261105-agents1"></script>
-    <script src="scene.js?v=20261105-agents1"></script>
-    <script src="agents.js?v=20261105-agents1"></script>
+    <script src="app.js?v=20261112-memory"></script>
+    <script src="scene.js?v=20261112-memory"></script>
+    <script src="agents.js?v=20261112-memory"></script>
+    <script src="memory-view.js?v=20261112-memory"></script>
   </body>
 </html>

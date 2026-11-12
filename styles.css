@@ -255,7 +255,86 @@ body.lights-off .shop-window {filter:none;}
   .people-board{left:16px;bottom:16px;width:calc(100% - 32px);height:452px;grid-template-columns:1fr 1fr;grid-template-rows:auto auto 1fr auto;gap:10px;padding:14px;}.people-board h2{grid-column:1/-1;font-size:17px;}.people-board h2 br{display:none;}.people-board h2 small{display:inline;margin-left:8px;}#attention-register{grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;}.register-row strong{font-size:11px;}.register-row span{font-size:10px;}.people-board >p{grid-column:1/-1;margin:0;}.relation-register >small{font-size:9px;}.position-stamp{font-size:8px;padding:2px 4px;}.proximity-signal{font-size:8px;}.floor-note{right:19px;bottom:479px;min-width:150px;max-width:190px;}
   .receipt{grid-template-columns:1fr;gap:18px;padding:24px 18px;}.receipt-title h2{font-size:29px;}.receipt-title p{max-width:320px;}.receipt-ending{grid-column:1;display:block;}.distance-line{grid-template-columns:145px 70px 1fr;}.distance-line >small{font-size:10px;}.street-edge p{font-size:10px;}
 }
-@media(max-width:420px){.shop-sign time{display:none;}.sign-copy h1{font-size:21px;}.shop-sign{grid-template-columns:35px 1fr;}.view-controls button{padding:8px 9px;}#room{height:455px;}.shop-window{height:1130px;}}
+
+.shop-window { height: auto; min-height: 0; }
+.scene-area { position: relative; height: clamp(510px, 65vh, 670px); }
+.scene-area #room { top: 0; height: 100%; }
+.scene-area .floor-note { bottom: 20px; }
+.scene-area .trace-key { bottom: 33px; }
+.view-controls { max-width: calc(100% - 266px); flex-wrap: wrap; }
+.view-controls #memory-view { color: #a7d9cb; }
+.view-controls #memory-view.selected { color: #142b34; background: #9dd1bf; }
+.view-controls button:disabled { color: #8c7f96; opacity: .55; cursor: default; }
+.memory-legend {
+  position: absolute;
+  top: 58px;
+  left: 94px;
+  z-index: 2;
+  display: none;
+  flex-wrap: wrap;
+  gap: 5px 17px;
+  color: #c3c8d3;
+  font: 12px/1.3 var(--print);
+  pointer-events: none;
+}
+.memory-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.memory-legend i { display: inline-block; width: 10px; height: 7px; }
+.memory-legend .visible-key { background: #72b4b1; }
+.memory-legend .remembered-key { background: #776d95; }
+.memory-legend .route-key { height: 0; border-top: 2px dashed #ffd091; }
+.scene-area[data-view="memory"] #room { cursor: default; touch-action: pan-y; }
+.scene-area[data-view="memory"] .memory-legend { display: flex; }
+.scene-area[data-view="memory"] :is(.stage-caption, .floor-note, .trace-key) { display: none; }
+
+.scene-focus {
+  display: grid;
+  grid-template-columns: minmax(145px, .28fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px 24px;
+  min-height: 82px;
+  margin: 0 24px;
+  padding: 13px 18px;
+  border-top: 1px solid #68536d;
+  border-bottom: 1px solid #44334c;
+  background: linear-gradient(100deg, #282036, #1b172a 58%);
+}
+.focus-person { display: grid; gap: 3px; }
+.focus-person span { color: #b5a0bb; font: 12px var(--print); }
+.focus-person strong { color: #f5dec2; font: 400 21px Georgia, serif; }
+#focus-decision { margin: 0; color: #e4c4d6; font: italic 15px/1.4 Georgia, serif; }
+#focus-destination { margin: 0; color: #f6cd99; font: 500 13px var(--print); }
+.shop-window .people-board {
+  position: relative;
+  inset: auto;
+  width: auto;
+  height: auto;
+  min-height: 164px;
+  grid-template-columns: 70px minmax(0, 1.5fr) minmax(120px, .5fr) minmax(125px, .6fr);
+  margin: 12px 24px 16px;
+}
+@media (min-width: 761px) and (max-width: 950px) {
+  .stage-caption, .memory-legend { top: 87px; }
+}
+@media (max-width: 760px) {
+  .scene-area { height: calc(235px + clamp(270px, 68vw, 390px)); }
+  .scene-area #room { top: 108px; height: clamp(270px, 68vw, 390px); }
+  .view-controls { max-width: calc(100% - 32px); }
+  .scene-area .stage-caption, .memory-legend { left: 18px; top: 87px; }
+  .memory-legend { font-size: 10px; gap: 5px 12px; }
+  .scene-area .coin-panel { top: auto; bottom: 0; }
+  .scene-area .floor-note { bottom: 127px; }
+  .scene-area .trace-key { bottom: 127px; }
+  .scene-focus {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    margin-inline: 16px;
+    padding: 13px 14px;
+  }
+  #focus-decision { grid-column: 1 / -1; grid-row: 2; font-size: 14px; }
+  #focus-destination { grid-column: 2; grid-row: 1; }
+  .shop-window .people-board { grid-template-columns: 1fr 1fr; margin-inline: 16px; }
+}
+@media(max-width:420px){.shop-sign time{display:none;}.sign-copy h1{font-size:21px;}.shop-sign{grid-template-columns:35px 1fr;}.view-controls button{padding:8px 9px;}}
 
 /* One folded field book, rather than a second control dashboard. */
 .field-book{display:grid;grid-template-columns:minmax(235px,.85fr) minmax(370px,1.3fr) minmax(300px,1fr);gap:34px;padding:35px 35px 32px 47px;background:#c9bd9b;color:#30273c;position:relative;border-top:8px solid #100d20;border-bottom:1px solid #7c6a74;}
