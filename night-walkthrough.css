@@ -95,6 +95,7 @@ body.in-walkthrough { overflow: hidden; }
   right: clamp(16px,4.5vw,64px);
   min-width: 95px;
 }
+.shop-time #night-audio { position: static; min-height: 32px; }
 .lens-foot {
   position: absolute;
   inset: auto 0 max(24px, env(safe-area-inset-bottom));

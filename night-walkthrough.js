@@ -54,6 +54,7 @@ function mount(renderer) {
   const loadButton = find('walk-door');
   const scanButton = find('watch-scan');
   const soundButton = find('night-audio');
+  const planSoundSlot = roomPage.querySelector('.shop-time');
   const backButton = find('return-to-walkthrough');
   const repair = find('walker-repair');
   const shift = find('walker-shift');
@@ -111,6 +112,7 @@ function mount(renderer) {
     roomPage.classList.toggle('walkthrough-underlay',visible);
     roomPage.inert = visible;
     if (visible) {
+      stage.after(soundButton);
       document.body.classList.add('in-walkthrough');
       window.scrollTo({top:0,behavior:'instant'});
       size();
@@ -236,6 +238,7 @@ function mount(renderer) {
     if (mode!=='shop') return;
     toggleScan(false);
     renderStage(false);
+    planSoundSlot.append(soundButton);
     roomPage.hidden=false;
     backButton.hidden=false;
     document.querySelector('#plan-view').click();
@@ -386,12 +389,15 @@ function mount(renderer) {
   document.addEventListener('laundry:show-studio',()=>{
     studioReturn=stageInFront;
     if (studioReturn) renderStage(false);
+    stage.after(soundButton);
     audio.scene('studio');
   });
   document.addEventListener('laundry:hide-studio',()=>{
     if (studioReturn) {
       renderStage(true);
       find('watch-layouts').focus({preventScroll:true});
+    } else {
+      planSoundSlot.append(soundButton);
     }
     audio.scene('shop');
     studioReturn=false;
