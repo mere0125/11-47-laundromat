@@ -6,12 +6,14 @@
     <title>11:47 Laundromat</title>
     <link rel="stylesheet" href="styles.css?v=20261112-memory" />
     <link rel="stylesheet" href="opening.css?v=2" />
+    <link rel="stylesheet" href="night-story.css?v=20261114-final1" />
+    <link rel="stylesheet" href="layout-studio.css?v=20261114-final1" />
   </head>
   <body>
     <main id="opening" class="opening">
       <div class="opening-copy">
         <h1><span>11:47</span> Laundromat</h1>
-        <p>Mere still needs a free washer. Inside, the night attendant has one last round to make.</p>
+        <p>One dryer has gone quiet. Mere comes in out of the rain and looks for a free washer.</p>
       </div>
       <div class="storefront">
         <canvas id="storefront-art" width="1640" height="1280" role="img" aria-label="A lit laundromat on a wet street, with a repair notice taped to the glass door."></canvas>
@@ -35,6 +37,20 @@
           <button id="step-outside" type="button">Step outside</button>
         </div>
       </header>
+
+      <aside class="shift-clipboard" aria-label="Night shift note">
+        <div class="shift-note">
+          <p class="shift-note-label"><span lang="ja">業務日誌</span> Night shift</p>
+          <h2>For the morning shift</h2>
+          <p>It gets tight by the dryers when the folding tables fill up. I left a couple of sketches for tomorrow.</p>
+          <p id="shift-plan-note" hidden></p>
+        </div>
+        <div class="shift-repair">
+          <p class="shift-note-label">D 03 <span id="shift-repair-status" aria-live="polite">Awaiting inspection</span></p>
+          <button id="follow-night-attendant" type="button" class="shift-follow">Follow the attendant <span aria-hidden="true">↗</span></button>
+        </div>
+        <button id="open-layout-studio" type="button" class="shift-sketches">Try a new layout <span aria-hidden="true">→</span></button>
+      </aside>
 
       <div class="shop-window">
         <div class="scene-area" data-view="room">
@@ -205,11 +221,16 @@
         <p>night keeps moving even when the laundry does not</p>
       </footer>
     </main>
-    <script src="app.js?v=20261112-door"></script>
-    <script src="scene.js?v=20261112-memory"></script>
-    <script src="agents.js?v=20261112-memory"></script>
+    <script src="app.js?v=20261114-final1"></script>
+    <script src="scene.js?v=20261114-final1"></script>
+    <script src="agents.js?v=20261114-final1"></script>
     <script src="memory-view.js?v=20261112-memory"></script>
-    <script src="opening.js?v=3"></script>
+    <script src="opening.js?v=20261114-final1"></script>
     <script src="storefront-weather.js?v=1"></script>
+    <script src="layout-experiment.js?v=20261114-final1"></script>
+    <script src="weather-data.js?v=1"></script>
+    <script src="layout-drawing.js?v=20261114-final1"></script>
+    <script src="layout-studio.js?v=20261114-final1"></script>
+    <script src="night-story.js?v=1"></script>
   </body>
 </html>

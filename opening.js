@@ -33,13 +33,14 @@
 
   function paintExterior() {
     const dryer = [...laundryMachines.values()].find(machine => machine.rect.label === 'D 03');
-    drawStorefront(storefrontContext, dryer?.fault);
-    art.setAttribute('aria-label', dryer?.fault
-      ? 'A lit laundromat on a wet street, with a repair notice taped to the glass door.'
-      : 'A lit laundromat on a wet street.');
+    const hasHandover = Boolean(window.laundromatHandover);
+    drawStorefront(storefrontContext, dryer?.fault, hasHandover);
+    const repair = dryer?.fault ? ' A repair notice is taped to the door.' : '';
+    const shift = hasHandover ? ' A plan for the morning shift is taped in the window.' : '';
+    art.setAttribute('aria-label', `A lit laundromat on a wet street.${repair}${shift}`);
   }
 
-  function drawStorefront(c, showRepairSlip) {
+  function drawStorefront(c, showRepairSlip, showHandover) {
     if (!c) return;
     c.setTransform(2, 0, 0, 2, 0, 0);
     c.clearRect(0, 0, 820, 640);
@@ -202,6 +203,22 @@
       c.fillText('D 03', 0, -3);
       c.font = '700 8px Arial, sans-serif';
       c.fillText('OUT OF ORDER', 0, 12);
+      c.restore();
+    }
+    if (showHandover) {
+      c.save();
+      c.translate(394, 324);
+      c.rotate(.065);
+      rect(-39, -23, 83, 49, '#221a2c70');
+      rect(-41, -26, 83, 49, gradient(0, -26, 0, 23, '#eaddc3', '#bda891'));
+      rect(-13, -31, 26, 8, '#eedac088');
+      c.fillStyle = '#503b4c';
+      c.font = 'italic 13px Georgia, serif';
+      c.textAlign = 'center';
+      c.fillText('Tomorrow', 0, -9);
+      stroke(-19, 2, 19, 2, '#75566e', 1.2);
+      rect(-19, 7, 13, 8, '#8e7384');
+      rect(7, 7, 12, 8, '#6e8785');
       c.restore();
     }
     c.restore();

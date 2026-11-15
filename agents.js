@@ -154,7 +154,8 @@ function beliefPath(mind,end){
       if(dx&&dy&&(mind.belief[y*cols+nx]===2||mind.belief[ny*cols+x]===2))continue;
       const personalObstacle=mind.neighbors.some(other=>distance(other,b)<25&&distance(other,start)>24);
       if(personalObstacle&&n!==target)continue;
-      const next=cost[k]+Math.hypot(dx,dy)*(mind.belief[n]===0?1.65:1);
+      const terrainSpeed = mind.terrainSpeeds?.get(n) ?? 1;
+      const next=cost[k]+Math.hypot(dx,dy)*(mind.belief[n]===0?1.65:1)/terrainSpeed;
       if(next<cost[n]){cost[n]=next;came[n]=k;push(n,next+heuristic(n));}
     }
   }
@@ -214,7 +215,8 @@ function routeStep(mind,dt){
   if(d<1){mind.path.shift();if(!mind.path.length)finishRoute(mind);return;}
   const wanted=Math.atan2(target.y-person.y,target.x-person.x);
   mind.heading+=clamp(angleDifference(wanted,mind.heading),-dt*.0045,dt*.0045);
-  const travel=Math.min(d,dt*(mind.role==='attendant' ? .049 : .043));
+  const terrainSpeed = typeof routeTerrainSpeed === 'function' ? routeTerrainSpeed(person) : 1;
+  const travel=Math.min(d,dt*(mind.role==='attendant' ? .049 : .043)*terrainSpeed);
   const next={x:person.x+(target.x-person.x)/d*travel,y:person.y+(target.y-person.y)/d*travel};
   if([...mind.objects.values()].some(rect=>lineIntersectsRect(person,next,rect))){finishRoute(mind);mind.decision='That newly seen object cuts across my route. Replanning.';return;}
   // Physical collision resolution. A hidden obstruction can stop a body, but
