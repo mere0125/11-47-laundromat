@@ -8,7 +8,7 @@
   align-items: center;
   gap: clamp(8px, 2vw, 36px);
   padding: clamp(22px, 5vw, 82px);
-  background: radial-gradient(ellipse at 70% 60%, #272335 0%, #171624 47%, #0d0e18 83%);
+  background: radial-gradient(ellipse at 70% 60%, #1b293d 0%, #121c2b 47%, #0b121c 83%);
 }
 
 .opening-copy { padding-left: clamp(0px, 2vw, 26px); }
@@ -28,8 +28,6 @@
 .opening-copy p {
   max-width: 28ch;
   margin: 29px 0 0;
-  padding-left: 15px;
-  border-left: 1px solid #76566b;
   color: #d0bec9;
   font: 400 clamp(15px, 1.45vw, 19px)/1.57 Georgia, serif;
 }
@@ -94,7 +92,7 @@
   .opening-copy { padding: 0 9px; }
   .opening-copy h1 { font-size: clamp(29px, 7.3vw, 48px); }
   .opening-copy h1 span { display: inline-block; margin: 0 7px 0 0; font-size: clamp(54px, 12vw, 82px); }
-  .opening-copy p { max-width: 40ch; margin-top: 14px; padding-left: 10px; }
+  .opening-copy p { max-width: 40ch; margin-top: 14px; }
   .entry-door { padding-bottom: 9%; }
 }
 

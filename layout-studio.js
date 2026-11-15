@@ -361,6 +361,7 @@
     window.scrollTo(0,0);
     resize();
     updateNotebook(true);
+    document.dispatchEvent(new Event('laundry:hide-studio'));
     focus?.focus({preventScroll:true});
   }
   get('back').addEventListener('click', () => backToShop());
@@ -402,6 +403,7 @@
     if (!studio.hidden) return;
     previousFocus = document.activeElement;
     if (!layouts.length) showPair([baseline, engine.variants(baseline)[0]]);
+    document.dispatchEvent(new Event('laundry:show-studio'));
     roomPage.hidden = true;
     studio.hidden = false;
     window.scrollTo(0,0);

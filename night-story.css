@@ -1,6 +1,6 @@
 .shift-clipboard {
   --shift-paper: #ead7b6;
-  --shift-ink: #322735;
+  --shift-ink: #262b36;
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(143px, auto) auto;
@@ -15,7 +15,7 @@
   background:
     repeating-linear-gradient(0deg, #674f3212 0 1px, transparent 1px 22px),
     linear-gradient(112deg, #f1e1c5, var(--shift-paper) 57%, #d7bea4);
-  box-shadow: 0 4px 0 #392d3e, 0 7px 17px #08071366;
+  box-shadow: 0 4px 0 #2c333f, 0 7px 17px #080c1266;
 }
 
 .shift-clipboard::before {
@@ -27,7 +27,7 @@
   height: 8px;
   border-radius: 2px;
   background: linear-gradient(180deg, #aa9291, #6b5a66 53%, #9b8885);
-  box-shadow: 0 2px 3px #30232f55;
+  box-shadow: 0 2px 3px #22263155;
 }
 
 .shift-note { min-width: 0; }
@@ -86,13 +86,13 @@
   min-height: 44px;
   gap: 11px;
   padding: 8px 13px;
-  border: 1px solid #4a3147;
+  border: 1px solid #333948;
   color: #f5e4c9;
-  background: #412b3e;
+  background: #2d323f;
   box-shadow: 2px 2px 0 #9f788566;
   text-align: left;
 }
-.shift-follow:hover { color: #251924; }
+.shift-follow:hover { color: #1a1d24; }
 .shift-sketches:hover { background: #54364b; }
 .shift-clipboard button:focus-visible {
   outline: 2px solid #65304a;

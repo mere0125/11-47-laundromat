@@ -604,7 +604,9 @@ function render(now) {
     const step = dt * simulationSpeed / steps;
     for (let i = 0; i < steps; i++) { elapsed += step; updateOccupants(step); }
   }
-  computeProximity(); computePlacement(); updateComparison(); updateClock(); drawPlan(); requestAnimationFrame(render);
+  computeProximity(); computePlacement(); updateComparison(); updateClock();
+  if (!roomPage.classList.contains('walkthrough-underlay')) drawPlan();
+  requestAnimationFrame(render);
 }
 
 function setControl(id, label, active) {
