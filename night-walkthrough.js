@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.min.js';
-import {buildStreet} from './street-model.js?v=20261119-play6';
+import {buildStreet} from './street-model.js?v=20261119-play7';
 import {buildAtmosphere,makeScan} from './night-atmosphere.js?v=20261119-play6';
 import {buildPeople} from './night-people.js?v=20261119-play6';
 import {makeNightSound} from './night-sound.js?v=20261119-play6';

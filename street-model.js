@@ -313,7 +313,7 @@ export function buildStreet(THREE, parent) {
     ctx.fillText('24時間', w - 177, h / 2 + 2);
     ctx.fillStyle='#405d62';
     ctx.font='700 38px "Yu Mincho",serif';
-    ctx.fillText('雨待ち',146,h/2+2);
+    ctx.fillText('雨宿り',146,h/2+2);
     for (let i = 0; i < 640; i++) {
       ctx.fillStyle = i % 2 ? '#7c66620b' : '#fff2ca15';
       ctx.fillRect(random() * w, random() * h, 2 + random() * 12, 1 + random() * 2);
