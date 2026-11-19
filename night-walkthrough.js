@@ -5,7 +5,7 @@ import {buildPeople} from './night-people.js?v=20261119-play6';
 import {makeNightSound} from './night-sound.js?v=20261119-play6';
 import {makeFirstPerson} from './first-person.js?v=20261119-play6';
 import {makeNightFilm,makeLaundryEnvironment} from './night-film.js?v=20261119-play6';
-import {makeNightTales} from './night-tales.js?v=20261119-play6';
+import {makeNightTales} from './night-tales.js?v=20261119-play8';
 
 const stage=document.querySelector('#night-walkthrough');
 const surface=document.querySelector('#night-lens');

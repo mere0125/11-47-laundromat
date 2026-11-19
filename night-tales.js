@@ -50,6 +50,7 @@ export function makeNightTales({host, onOpen, onClose, onChange, onSound, getMin
     closeCallback=afterClose;
     active=true;
     speaker.textContent=by;
+    speaker.hidden=!by;
     title.textContent=heading;
     lines.replaceChildren();
     for(const line of text) paragraph(line);
@@ -147,8 +148,7 @@ export function makeNightTales({host, onOpen, onClose, onChange, onSound, getMin
       scarf:'“I sort everything before I come. Somehow it all gets mixed up again.”',
       raincoat:'“I could’ve waited at home. This is nicer.”'
     }[id] || '“A few more minutes, I think.”';
-    const subtitle=busy?'They set the laundry down for a moment.':'A moment between cycles.';
-    open(names[id]||'A late arrival',subtitle,[quote]);
+    open('',names[id]||'A late arrival',[quote]);
   }
   function interact(target) {
     if(active || !target)return;
