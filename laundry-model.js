@@ -7,6 +7,9 @@
     parent.add(group);
 
     const machines = new Map();
+    const interactables = [];
+    const storyProps = {};
+    let tableLightOn = true;
     const lights = [];
     const textures = [];
     const materials = [];
@@ -29,15 +32,15 @@
     const sphereGeo = geometry(new THREE.SphereGeometry(1, 14, 9));
     const ringGeo = geometry(new THREE.TorusGeometry(1, .063, 8, 40));
 
-    const navy = material('#29303c', {metalness: .18});
+    const navy = material('#24374b', {metalness: .18});
     const enamel = material('#c1c4bf', {metalness: .15, roughness: .46});
     const charcoal = material('#131922');
     const rubber = material('#202530', {roughness: .92});
     const chrome = material('#8b9da4', {metalness: .72, roughness: .32});
     const satin = material('#566574', {metalness: .38, roughness: .49});
     const warmSteel = material('#c6c4ba', {metalness: .42, roughness: .48});
-    const woodEdge = material('#776252');
-    const wood = material('#a48b73', {roughness: .77});
+    const woodEdge = material('#654b37');
+    const wood = material('#ad885e', {roughness: .68});
     const jade = material('#65817f');
     const textiles = ['#738e99', '#c5ad87', '#7e818f', '#a37382', '#e1dcc3'].map(color => material(color, {roughness: .96}));
     const ledIdle = material('#213138');
@@ -78,23 +81,74 @@
       return material('#ffffff', {map: texture(width, height, draw), roughness: .88, ...options});
     }
 
+    // These small marks are painted into the materials, rather than added as floating decoration.
+    const enamelWear = texture(512, 512, ctx => {
+      ctx.fillStyle = '#e5e7dd'; ctx.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 5000; i++) {
+        ctx.fillStyle = random() < .5 ? '#15273809' : '#fff8d60d';
+        ctx.fillRect(random() * 512, random() * 512, .6 + random() * 1.7, .5 + random());
+      }
+      for (let edge = 0; edge < 22; edge++) {
+        const y = random() * 512;
+        ctx.fillStyle = '#606b6335'; ctx.fillRect(random() < .5 ? 0 : 507, y, 2 + random() * 4, 1 + random() * 14);
+      }
+      const grime = ctx.createLinearGradient(0, 0, 0, 512);
+      grime.addColorStop(0, '#35433b25'); grime.addColorStop(.08, '#35433b00');
+      grime.addColorStop(.8, '#35433b00'); grime.addColorStop(1, '#293a4538');
+      ctx.fillStyle = grime; ctx.fillRect(0, 0, 512, 512);
+    });
+    wood.map = texture(1024, 256, ctx => {
+      ctx.fillStyle = '#c3aa7d'; ctx.fillRect(0, 0, 1024, 256);
+      for (let i = 0; i < 360; i++) {
+        const y = random() * 256;
+        ctx.strokeStyle = i % 4 ? '#62482f1b' : '#f7e6b429';
+        ctx.lineWidth = .4 + random() * 2;
+        ctx.beginPath(); ctx.moveTo(0, y);
+        ctx.bezierCurveTo(290, y + random() * 9, 680, y - random() * 8, 1024, y + random() * 3); ctx.stroke();
+      }
+      for (const seam of [64, 128, 192]) { ctx.fillStyle = '#59472d52'; ctx.fillRect(0, seam, 1024, 1); }
+      for (let i = 0; i < 55; i++) {
+        ctx.strokeStyle = '#f5e1b541'; ctx.lineWidth = .7;
+        const x = random() * 1000, y = random() * 256;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 5 + random() * 55, y + 1); ctx.stroke();
+      }
+    });
+    const clothBlue = material('#3d6b8b', {roughness: .98});
+    const lampShade = material('#536c5b', {metalness: .35, roughness: .48});
+    const lampLining = material('#eed8a4', {emissive: '#ffc36f', emissiveIntensity: .75, side: THREE.DoubleSide});
+
+    function remember(id, label, kind, target, localPosition, radius = 1.1, extra = {}) {
+      target.updateWorldMatrix(true, false);
+      let fixture = target;
+      while (fixture && !Number.isInteger(fixture.userData.obstacleIndex)) fixture = fixture.parent;
+      const item = {id, label, kind, position: target.localToWorld(localPosition.clone()), radius, mesh: target,
+        obstacleIndex: fixture?.userData.obstacleIndex, ...extra};
+      target.userData.interactableId = id;
+      interactables.push(item);
+      return item;
+    }
+
     const tile = texture(1536, 896, ctx => {
       const columns = 49;
       const rows = 29;
       const w = 1536 / columns;
       const h = 896 / rows;
-      ctx.fillStyle = '#303742';
+      ctx.fillStyle = '#454e4b';
       ctx.fillRect(0, 0, 1536, 896);
       for (let row = 0; row < rows; row++) for (let column = 0; column < columns; column++) {
-        const gray = Math.round(101 + random() * 21 + Math.sin(column * .62 + row * .78) * 5);
+        const gray = Math.round(112 + random() * 18 + Math.sin(column * .62 + row * .78) * 5);
         const x = column * w, y = row * h;
-        ctx.fillStyle = `rgb(${gray},${gray + 4},${gray + 8})`;
+        ctx.fillStyle = `rgb(${gray - 3},${gray + 7},${gray + 4})`;
         ctx.fillRect(x + .7, y + .7, w - 1.5, h - 1.6);
         ctx.fillStyle = '#eef0dd23';
         ctx.fillRect(x + 1, y + 1, w - 3, .8);
         for (let grain = 0; grain < 21; grain++) {
           ctx.fillStyle = random() < .4 ? '#e9e1d31f' : '#252b3523';
           ctx.fillRect(x + 2 + random() * (w - 4), y + 1 + random() * (h - 2), .7 + random() * 2, 1);
+        }
+        if (random() < .055) {
+          ctx.strokeStyle = '#303f3b50'; ctx.lineWidth = .7;
+          ctx.beginPath(); ctx.moveTo(x + w * .6, y + 1); ctx.lineTo(x + w * .48, y + h * .35); ctx.lineTo(x + w * .64, y + h * .6); ctx.stroke();
         }
       }
       const ends = ctx.createLinearGradient(0, 0, 0, 896);
@@ -221,9 +275,9 @@
       const d = shellWidth - .036;
       const h = dryer ? 1.94 : 1.13 + (index % 3) * .017;
       const frontZ = d / 2;
-      const shellColor = dryer ? ['#8c9c9e','#a19e8e','#9ea7a5','#809494','#a2a6a4','#7b8d91'][index % 6]
-        : ['#d1cdbd','#c8c4b7','#d3d1c2','#c2c4be'][index % 4];
-      const shell = material(shellColor, {metalness: dryer ? .32 : .16, roughness: dryer ? .46 : .53});
+      const shellColor = dryer ? ['#3f5a69','#455a61','#4d616b','#38556a','#526565','#405267'][index % 6]
+        : ['#3d566e','#405a71','#40586a','#344b63'][index % 4];
+      const shell = material(shellColor, {map: enamelWear, metalness: dryer ? .32 : .24, roughness: .48});
       box(target, navy, 0, .049, 0, w - .067, .098, d - .068);
       box(target, shell, 0, h / 2 + .051, 0, w, h - .10, d);
       box(target, warmSteel, 0, h - .041, 0, w + .003, .025, d + .005);
@@ -266,12 +320,25 @@
         box(target, satin, w * .27, .23, frontZ + .032, .13, .10, .017);
         box(target, shell, w * .27, .23, frontZ + .043, .109, .08, .011);
       }
+      // Recessed service screws and the rubbed plinth give each machine a credible scale.
+      for (const x of [-w * .41, w * .41]) for (const y of [.2, h - .31]) {
+        roller(target, satin, x, y, frontZ + .032, .012, .009);
+        box(target, charcoal, x, y, frontZ + .038, .012, .0025, .003);
+      }
+      const maintenance = decal(128, 96, ctx => {
+        ctx.fillStyle = '#d7c89b'; ctx.fillRect(0, 0, 128, 96);
+        ctx.fillStyle = '#40535b'; ctx.font = '15px sans-serif'; ctx.fillText('点検済', 10, 22);
+        ctx.strokeStyle = '#a65e4b'; ctx.lineWidth = 2; ctx.strokeRect(9, 33, 109, 52);
+        ctx.fillStyle = '#97543f'; ctx.font = '19px monospace'; ctx.fillText('10.24', 26, 67);
+      });
+      face(target, maintenance, -w * .30, .24, frontZ + .034, .094, .071);
       const faultTag = face(target, faultNotice, -.031, cy + radius * .38, frontZ + .152, w * .69, .21);
       faultTag.rotation.z = -.078;
       faultTag.visible = false;
       machines.set(index, {group: target, drum, led, faultTag, load: drum.children.slice(1)});
     }
 
+    let tableCount = 0;
     function table(target, w, d, index) {
       const height = .84;
       for (const x of [-w / 2 + .115, w / 2 - .115]) for (const z of [-d / 2 + .091, d / 2 - .091]) {
@@ -281,6 +348,9 @@
       for (const z of [-d / 2 + .1, d / 2 - .1]) box(target, satin, 0, .62, z, w - .23, .061, .043);
       box(target, woodEdge, 0, height - .027, 0, w, .059, d);
       box(target, wood, 0, height + .008, 0, w - .008, .017, d - .008);
+      for (const x of [-w / 2 + .08, w / 2 - .08]) for (const z of [-d / 2 + .07, d / 2 - .07]) {
+        mesh(target, cylinderGeo, satin, x, height + .018, z, .008, .001, .008);
+      }
       for (let i = 0; i < 3; i++) {
         const stack = new THREE.Group();
         stack.position.set((i - 1) * w * .235, height + .035, (i % 2 - .5) * d * .3);
@@ -290,7 +360,44 @@
           const finish = textiles[(i + cloth + index) % textiles.length];
           box(stack, finish, cloth * .012, cloth * .039, 0, .36 - cloth * .018, .036, .26 - cloth * .011);
           mesh(stack, sphereGeo, finish, .008, cloth * .039 + .003, .124, .175, .020, .030);
+          box(stack, textiles[(i + cloth + index + 1) % textiles.length], .04, cloth * .039 + .019, .07, .12, .002, .025);
         }
+      }
+      if (tableCount++ === 0) {
+        const sock = new THREE.Group();
+        sock.name = 'The blue sock'; sock.position.set(w * .09, height + .025, d * .29); sock.rotation.y = -.33;
+        target.add(sock);
+        const outline = new THREE.Shape();
+        outline.moveTo(-.065, -.15); outline.lineTo(.043, -.15); outline.lineTo(.039, .045);
+        outline.quadraticCurveTo(.052, .076, .107, .083); outline.quadraticCurveTo(.165, .104, .153, .145);
+        outline.quadraticCurveTo(.106, .178, .017, .154); outline.quadraticCurveTo(-.065, .123, -.067, .069);
+        outline.closePath();
+        const sockMesh = mesh(sock, geometry(new THREE.ExtrudeGeometry(outline, {depth: .009, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: .004, bevelThickness: .003})), clothBlue, 0, .013, 0);
+        sockMesh.rotation.x = -Math.PI / 2;
+        for (let rib = 0; rib < 5; rib++) box(sock, textiles[0], -.055 + rib * .022, .026, .135, .004, .003, .025);
+        box(sock, material('#b2c5bd', {roughness: 1}), -.01, .027, .092, .103, .002, .012);
+        storyProps.sock = sock;
+        remember('blue-sock', 'A blue sock', 'lost-property', sock, new THREE.Vector3(0, .05, 0), 1.3);
+
+        const lamp = new THREE.Group(); lamp.name = 'Folding table lamp';
+        lamp.position.set(w * .40, height + .02, -d * .12); target.add(lamp);
+        mesh(lamp, cylinderGeo, lampShade, 0, .028, 0, .13, .055, .13);
+        mesh(lamp, cylinderGeo, chrome, 0, .22, 0, .015, .36, .015);
+        const shadeGeometry = geometry(new THREE.CylinderGeometry(.095, .23, .20, 32, 1, true));
+        mesh(lamp, shadeGeometry, lampShade, 0, .44, 0);
+        mesh(lamp, geometry(new THREE.CylinderGeometry(.088, .222, .187, 32, 1, true)), lampLining, 0, .438, 0);
+        mesh(lamp, sphereGeo, lampLining, 0, .386, 0, .055, .065, .055);
+        mesh(lamp, cylinderGeo, satin, 0, .548, 0, .035, .012, .035);
+        box(lamp, charcoal, .092, .059, .016, .023, .012, .028);
+        const warmPool = new THREE.SpotLight('#ffc46f', 9, 3.4, Math.PI*.36, .8, 2);
+        warmPool.position.set(0, .35, 0); lamp.add(warmPool);
+        warmPool.target.position.set(0,-.25,0);
+        lamp.add(warmPool.target);
+        storyProps.tableLamp = warmPool;
+        storyProps.lampGlow = lampLining;
+        const cable = new THREE.CatmullRomCurve3([new THREE.Vector3(.02,.011,-.04),new THREE.Vector3(.13,.006,-.15),new THREE.Vector3(.18,-.03,-d*.32),new THREE.Vector3(.18,-.65,-d*.34)]);
+        mesh(lamp, geometry(new THREE.TubeGeometry(cable, 18, .006, 5, false)), charcoal, 0, 0, 0);
+        remember('table-lamp', 'The green table lamp', 'light', lamp, new THREE.Vector3(0, .35, 0), 1.2);
       }
     }
 
@@ -340,13 +447,67 @@
       });
       const book = face(target, magazine, -.17, .517, -.028, .23, .34);
       book.rotation.set(-Math.PI / 2, 0, .24);
+
+      const pot = new THREE.Group();
+      pot.position.set(-w*.43,.513,-.017);
+      target.add(pot);
+      mesh(pot,geometry(new THREE.CylinderGeometry(.10,.075,.17,24)),material('#a36d4a',{roughness:.9}),0,.085,0);
+      mesh(pot,circleGeo,material('#3e3a2f',{roughness:1}),0,.174,0,.093,.093,1).rotation.x=-Math.PI/2;
+      const stem=material('#5b6943',{roughness:1});
+      const leafFinish=material('#597551',{roughness:.84,side:THREE.DoubleSide});
+      const leafShape=new THREE.Shape();
+      leafShape.moveTo(0,0);
+      leafShape.quadraticCurveTo(.09,.055,.025,.19);
+      leafShape.quadraticCurveTo(-.07,.11,0,0);
+      const leafGeometry=geometry(new THREE.ShapeGeometry(leafShape,12));
+      for(let branch=0;branch<3;branch++){
+        const branchGroup=new THREE.Group();
+        branchGroup.position.set((branch-1)*.025,.17,0);
+        branchGroup.rotation.z=(branch-1)*.23;
+        pot.add(branchGroup);
+        mesh(branchGroup,cylinderGeo,stem,0,.21,0,.005,.42,.005);
+        for(let tier=0;tier<4;tier++)for(const side of [-1,1]){
+          const leaf=mesh(branchGroup,leafGeometry,leafFinish,0,.08+tier*.085,0);
+          leaf.rotation.set(-.3,tier*.88+branch*1.8,side*.78);
+          leaf.scale.setScalar(.64+tier*.06);
+        }
+      }
+
+      const nightBook = new THREE.Group(); nightBook.name = 'The night book';
+      nightBook.position.set(w * .34, .525, -.015); nightBook.rotation.y = -.13; target.add(nightBook);
+      box(nightBook, material('#5d6a61'), 0, .006, 0, .38, .022, .28);
+      box(nightBook, material('#c7baa0'), 0, .021, 0, .363, .014, .267);
+      const nightPages = decal(640, 448, ctx => {
+        ctx.fillStyle = '#e4d7b7'; ctx.fillRect(0, 0, 640, 448);
+        const crease = ctx.createLinearGradient(293, 0, 335, 0);
+        crease.addColorStop(0, '#b2a28300'); crease.addColorStop(.5, '#8b7d5960'); crease.addColorStop(1, '#b2a28300');
+        ctx.fillStyle = crease; ctx.fillRect(293, 0, 42, 448);
+        ctx.strokeStyle = '#86948840'; ctx.lineWidth = 1;
+        for (let y = 88; y < 424; y += 34) { ctx.beginPath(); ctx.moveTo(17,y); ctx.lineTo(622,y); ctx.stroke(); }
+        ctx.fillStyle = '#43504b'; ctx.font = '27px cursive'; ctx.fillText('夜のノート', 24, 48);
+        ctx.font = '21px cursive'; ctx.fillText('11/19   雨', 26, 112);
+        ctx.fillText('傘は入口に。', 25, 177); ctx.fillText('D03  点検待ち', 27, 244);
+        ctx.fillStyle = '#7d5544'; ctx.fillText('忘れ物：青いくつ下', 344, 110);
+        ctx.font = '18px cursive'; ctx.fillText('Lost sock on the folding table.', 344, 153);
+        ctx.strokeStyle = '#6a7770'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(397, 236); ctx.lineTo(397, 315); ctx.quadraticCurveTo(447,355,474,327); ctx.lineTo(424,294); ctx.lineTo(424,236); ctx.stroke();
+        ctx.fillStyle = '#9b5c4c'; ctx.fillRect(583, 0, 10, 54);
+      });
+      face(nightBook, nightPages, 0, .031, 0, .36, .26).rotation.x = -Math.PI / 2;
+      box(nightBook, material('#a66550'), .142, .033, .133, .015, .002, .068);
+      const pencil = box(nightBook, material('#c3a158'), -.19, .043, .015, .009, .009, .19);
+      pencil.rotation.y = -.14;
+      remember('night-book', 'The night book', 'note', nightBook, new THREE.Vector3(0, .05, 0), 1.25);
     }
 
     function dispenser(target, w, d) {
-      const finish = material('#916779', {metalness: .19, roughness: .62});
+      const originalTarget = target, originalWidth = w;
+      const body = new THREE.Group(); body.position.x = w * .10; target.add(body);
+      target = body; w *= .78;
+      const finish = material('#a58c60', {map: enamelWear, metalness: .19, roughness: .62});
       box(target, finish, 0, .93, 0, w, 1.86, d);
       const vendingFace = decal(256, 448, ctx => {
-        ctx.fillStyle = '#aa7b8d'; ctx.fillRect(0, 0, 256, 448);
+        ctx.fillStyle = '#a78e62'; ctx.fillRect(0, 0, 256, 448);
         ctx.fillStyle = '#e5cdb2'; ctx.fillRect(13, 17, 230, 66);
         ctx.font = '700 32px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#4e4651'; ctx.fillText('洗剤  SOAP', 128, 61);
         ctx.fillStyle = '#354450'; ctx.fillRect(13, 97, 187, 199);
@@ -355,17 +516,59 @@
           ctx.fillRect(21 + column * 60, 110 + row * 59, 46, 35);
           ctx.fillStyle = '#263e4b'; ctx.fillRect(26 + column * 60, 119 + row * 59, 26, 3);
         }
-        ctx.fillStyle = '#b07e8d'; ctx.fillRect(23, 326, 209, 96);
+        ctx.fillStyle = '#8a7452'; ctx.fillRect(23, 326, 209, 96);
         ctx.fillStyle = '#222633'; ctx.fillRect(31, 357, 170, 46);
       }, {emissive: '#f1d1b1', emissiveIntensity: .11});
       face(target, vendingFace, 0, .94, d / 2 + .006, w - .065, 1.77);
       box(target, chrome, w * .4, .87, d / 2 + .024, .099, .23, .038);
       box(target, charcoal, w * .4, .914, d / 2 + .046, .062, .012, .011);
       box(target, ledActive, w * .40, .81, d / 2 + .047, .027, .014, .01);
+      remember('soap-dispenser', 'The soap dispenser', 'soap', target, new THREE.Vector3(0, .94, d / 2), 1.3);
+
+      const tray = new THREE.Group(); tray.name = 'Coin tray'; tray.position.set(-w*.2, 1.89, d*.15); target.add(tray);
+      box(tray, material('#4b625b',{metalness:.35}), 0, 0, 0, .25, .022, .18);
+      for (const x of [-.12,.12]) box(tray, jade, x, .017, 0, .012,.025,.18);
+      for (const z of [-.085,.085]) box(tray, jade, 0,.017,z,.24,.025,.012);
+      const coinMetal = material('#b4a37a',{metalness:.75,roughness:.38});
+      for (let i=0;i<4;i++) {
+        const x=[-.04,.045,.015,-.055][i],z=[-.025,.02,-.01,.035][i];
+        mesh(tray,cylinderGeo,coinMetal,x,.018+i*.002,z,.027,.003,.027);
+      }
+      remember('coin-tray', 'A few spare coins', 'coins', tray, new THREE.Vector3(0,.06,0), 1.4);
+
+      // The narrow umbrella well is inside the dispenser's existing collision rectangle.
+      const rack = new THREE.Group(); rack.name = 'Umbrella well';
+      rack.position.set(-originalWidth*.385, .005, -d*.15); originalTarget.add(rack);
+      const rackWidth = originalWidth*.19;
+      box(rack, navy, 0,.035,0,rackWidth,.06,d*.62);
+      for(const x of [-rackWidth*.43,rackWidth*.43]) for(const z of [-d*.27,d*.27]) box(rack,satin,x,.24,z,.014,.45,.014);
+      for(const y of [.15,.39]) {
+        for(const x of [-rackWidth*.43,rackWidth*.43]) box(rack,satin,x,y,0,.014,.018,d*.55);
+        for(const z of [-d*.27,d*.27]) box(rack,satin,0,y,z,rackWidth*.88,.018,.014);
+      }
+      for(let i=0;i<3;i++) {
+        const umbrella = new THREE.Group(); umbrella.position.set((i-1)*rackWidth*.22,.1,(i-1)*d*.12); umbrella.rotation.z=(i-1)*.055; rack.add(umbrella);
+        const fabric = material(['#586b68','#3e556f','#a48d62'][i],{roughness:.76});
+        mesh(umbrella,cylinderGeo,chrome,0,.49,0,.008,.95,.008);
+        mesh(umbrella,geometry(new THREE.CylinderGeometry(.012,.041,.58,8)),fabric,0,.36,0);
+        box(umbrella,satin,0,.48,0,.078,.012,.065);
+        const handle = new THREE.CatmullRomCurve3([new THREE.Vector3(0,.92,0),new THREE.Vector3(0,1.01,0),new THREE.Vector3(.07,1.025,0),new THREE.Vector3(.085,.96,0)]);
+        mesh(umbrella,geometry(new THREE.TubeGeometry(handle,12,.012,6,false)),i===2?woodEdge:navy,0,0,0);
+        for(let drop=0;drop<2;drop++) mesh(rack,sphereGeo,sheen,(i-1)*rackWidth*.22,.06,((i+drop)%3-1)*d*.11,.012,.0025,.018);
+      }
+      remember('umbrella-rack', 'Umbrellas by the door', 'umbrella', rack, new THREE.Vector3(0,.65,0),1.4);
+      const umbrellaNote = decal(384, 224, ctx => {
+        ctx.fillStyle='#ddcda4'; ctx.fillRect(0,0,384,224);
+        ctx.fillStyle='#3c5358'; ctx.textAlign='center'; ctx.font='33px cursive'; ctx.fillText('借り傘',192,57);
+        ctx.font='22px cursive'; ctx.fillText('晴れた日に返してください',192,108);
+        ctx.font='18px sans-serif'; ctx.fillText('Bring it back when',192,155); ctx.fillText('the sun comes out.',192,181);
+      });
+      const card = face(rack,umbrellaNote,0,.455,d*.285,rackWidth*.95,.14);
+      card.rotation.z=-.045;
     }
 
     function utility(target, w, d) {
-      const concrete = material('#625b69', {roughness: .96});
+      const concrete = material('#7e816a', {roughness: .96});
       box(target, concrete, 0, 1.26, 0, w, 2.52, d);
       box(target, navy, 0, .069, 0, w + .003, .123, d + .003);
       box(target, satin, -.22, 1.04, d / 2 + .021, .85, 2.07, .040);
@@ -403,6 +606,25 @@
         else if (rect.kind === 'vending') dispenser(fixture, w, d);
         else if (rect.kind === 'room') utility(fixture, w, d);
       }
+    }
+
+    // A found sock gets its mate back. The line is above head height, against the front glass.
+    if (storyProps.sock) {
+      const paired = new THREE.Group(); paired.name = 'Reunited socks'; paired.position.set(-3.4,2.04,5.42);
+      group.add(paired);
+      const socks=[];
+      for (const x of [-.16,.16]) {
+        const sock = storyProps.sock.clone(true);
+        sock.position.set(x,0,0); sock.rotation.set(Math.PI/2,0,Math.PI+(x<0?-.08:.06));
+        delete sock.userData.interactableId; paired.add(sock);socks.push(sock);
+        box(paired,wood,x,.17,.009,.022,.064,.026);
+      }
+      box(paired,material('#a2a69a',{roughness:.9}),0,.19,0,1.1,.006,.006);
+      for (const x of [-.55,.55]) box(paired,satin,x,.20,.025,.014,.035,.067);
+      storyProps.paired=paired;
+      storyProps.returnedSock=socks[1];
+      socks[1].visible=false;
+      remember('sock-line','The lost-and-found line','lost-property',paired,new THREE.Vector3(0,.05,0),1.6);
     }
 
     const clockFace = decal(256, 256, ctx => {
@@ -450,8 +672,8 @@
         ctx.font='20px sans-serif'; ctx.fillText(detail,x+19,317);
       }
     });
-    box(group,navy,-2.5,2.36,-3.93,2.14,1.09,.046);
-    face(group,instructions,-2.5,2.36,-3.904,2.075,1.039);
+    box(group,navy,-2.5,2.36,-3.88,2.14,1.09,.046);
+    face(group,instructions,-2.5,2.36,-3.854,2.075,1.039);
     const notice=decal(384,256,ctx=>{
       ctx.fillStyle='#e0d7a9'; ctx.fillRect(0,0,384,256);
       ctx.fillStyle='#935643'; ctx.fillRect(0,0,384,69);
@@ -460,10 +682,10 @@
       ctx.fillText('お早めにお取り出しください',19,157);
       ctx.font='18px sans-serif'; ctx.fillText('Please collect your laundry promptly.',19,204);
     });
-    face(group,notice,.92,2.19,-3.898,1.01,.68);
+    face(group,notice,.92,2.19,-3.85,1.01,.68);
 
-    const tubeCool = material('#d9e2df', {emissive: '#c4e2ee', emissiveIntensity: 1.23, roughness: .29});
-    const tubeWarm = material('#f5e3c6', {emissive: '#fdddac', emissiveIntensity: 1.32, roughness: .31});
+    const tubeCool = material('#e4d2b7', {emissive: '#f4d6aa', emissiveIntensity: 1.08, roughness: .29});
+    const tubeWarm = material('#f5d9ac', {emissive: '#f6cc90', emissiveIntensity: 1.22, roughness: .31});
     const circuit = material('#4b515d', {metalness: .45});
     const span = Math.abs(max.x - min.x);
     const center = (max.x + min.x) / 2;
@@ -483,8 +705,8 @@
           box(group, navy, x + end * (length / 2 + .015), y + .022, location.z, .052, .090, .218);
           box(group, circuit, x + end * .68, y + .119, location.z, .018, .149, .018);
         }
-        const intensity = warm ? 15 : 12;
-        const lamp = new THREE.PointLight(warm ? '#ffdca7' : '#d8e8f2', intensity, 8, 2);
+        const intensity = warm ? 9 : 6.5;
+        const lamp = new THREE.PointLight(warm ? '#ffcf8c' : '#efd6b0', intensity, 8, 2);
         lamp.position.set(x, y - .122, location.z);
         group.add(lamp);
         lights.push({lamp, intensity});
@@ -525,16 +747,35 @@
     }
 
     function updateLighting(enabled) {
-      tubeCool.emissiveIntensity = enabled ? 1.23 : 0;
-      tubeWarm.emissiveIntensity = enabled ? 1.32 : 0;
-      tubeCool.color.set(enabled ? '#d9e2df' : '#656b70');
-      tubeWarm.color.set(enabled ? '#f5e3c6' : '#746e65');
+      tubeCool.emissiveIntensity = enabled ? 1.08 : 0;
+      tubeWarm.emissiveIntensity = enabled ? 1.22 : 0;
+      tubeCool.color.set(enabled ? '#e4d2b7' : '#656b70');
+      tubeWarm.color.set(enabled ? '#f5d9ac' : '#746e65');
       for (const {lamp, intensity} of lights) lamp.intensity = enabled ? intensity : 0;
+      // The little task lamp has its own switch; it remains a pocket of warm light.
+      if (storyProps.tableLamp) storyProps.tableLamp.intensity = tableLightOn ? 9 : 0;
+    }
+
+    function setStoryState(state = {}) {
+      if (typeof state.sockFound === 'boolean') {
+        if (storyProps.sock) storyProps.sock.visible = !state.sockFound;
+      }
+      if(storyProps.returnedSock&&typeof state.sockReturned==='boolean')storyProps.returnedSock.visible=state.sockReturned;
+      if (typeof state.lightOn === 'boolean') {
+        tableLightOn = state.lightOn;
+        if (storyProps.tableLamp) storyProps.tableLamp.intensity = tableLightOn ? 9 : 0;
+        lampLining.emissiveIntensity = tableLightOn ? .75 : 0;
+        lampLining.color.set(tableLightOn ? '#eed8a4' : '#958b74');
+      }
+      if (state.bookRead) {
+        const book = interactables.find(item => item.id === 'night-book');
+        if (book) book.mesh.userData.read = true;
+      }
     }
 
     const initialMachines = Array.isArray(data.machines) ? data.machines : [...(data.machines?.values?.() || [])];
     for (const machine of initialMachines) updateMachine(machine.index, machine);
-    return {group, machines, updateMachine, updateLighting, dispose() {
+    return {group, machines, interactables, setStoryState, updateMachine, updateLighting, dispose() {
       parent.remove(group);
       for (const item of textures) item.dispose();
       for (const item of materials) item.dispose();

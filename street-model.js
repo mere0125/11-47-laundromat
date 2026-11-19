@@ -200,6 +200,30 @@ export function buildStreet(THREE, parent) {
   box(shell, [.30, 4.28, 9.8], [-7.9, 2.14, .68], grayPanel);
   box(shell, [.30, 4.28, 9.8], [7.9, 2.14, .68], grayPanel);
   box(shell, [16.1, 4.28, .30], [0, 2.14, -4.04], grayPanel);
+  const plasterMap=canvasMap(512,512,(ctx,w,h)=>{
+    ctx.fillStyle='#c3bea4';ctx.fillRect(0,0,w,h);
+    for(let i=0;i<16000;i++){
+      ctx.fillStyle=i%2?'#42504515':'#fff3d51d';
+      ctx.fillRect(random()*w,random()*h,.5+random()*1.5,.4+random()*1.2);
+    }
+    const aged=ctx.createLinearGradient(0,0,0,h);
+    aged.addColorStop(0,'#5b604022');aged.addColorStop(.8,'#fff0cc00');aged.addColorStop(1,'#655f462b');
+    ctx.fillStyle=aged;ctx.fillRect(0,0,w,h);
+  });
+  const plaster=new THREE.MeshStandardMaterial({map:plasterMap,color:'#e3dcc3',roughness:.97});
+  const lowerWall=material('#47635b',.85);
+  const rail=material('#544c3b',.71);
+  face(shell,15.5,3.42,[0,1.79,-3.876],plaster);
+  face(shell,9.16,3.42,[-7.734,1.79,.65],plaster,Math.PI/2);
+  face(shell,9.16,3.42,[7.734,1.79,.65],plaster,-Math.PI/2);
+  box(shell,[15.47,.87,.018],[0,.52,-3.86],lowerWall);
+  box(shell,[.018,.87,9.12],[-7.722,.52,.65],lowerWall);
+  box(shell,[.018,.87,9.12],[7.722,.52,.65],lowerWall);
+  box(shell,[15.47,.046,.035],[0,.963,-3.845],rail);
+  for(const side of [-1,1]){
+    box(shell,[.035,.046,9.12],[side*7.712,.963,.65],rail);
+    box(shell,[.044,.093,9.12],[side*7.709,.13,.65],rail);
+  }
   clad(9.8, 4.25, -8.056, 2.14, .68, -Math.PI / 2);
   clad(9.8, 4.25, 8.056, 2.14, .68, Math.PI / 2);
   clad(16.1, 4.25, 0, 2.14, -4.196, Math.PI);
@@ -287,6 +311,9 @@ export function buildStreet(THREE, parent) {
     ctx.fillStyle = '#773a57';
     ctx.font = '700 34px "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif';
     ctx.fillText('24時間', w - 177, h / 2 + 2);
+    ctx.fillStyle='#405d62';
+    ctx.font='700 38px "Yu Mincho",serif';
+    ctx.fillText('雨待ち',146,h/2+2);
     for (let i = 0; i < 640; i++) {
       ctx.fillStyle = i % 2 ? '#7c66620b' : '#fff2ca15';
       ctx.fillRect(random() * w, random() * h, 2 + random() * 12, 1 + random() * 2);

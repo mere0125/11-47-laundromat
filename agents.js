@@ -117,6 +117,8 @@ function senseAgent(mind){
   const exit=attractors.find(item=>item.id==='door');
   if(sensorSees(mind,exit))registerLandmark(mind,'exit',{name:'front door',kind:'exit',x:exit.x,y:exit.y,status:doorOpen?'open':'closed'});
   mind.neighbors=occupants.filter(other=>other!==p&&sensorSees(mind,other)).map(other=>({id:other.id,x:other.x,y:other.y,seenAt:elapsed}));
+  const visitor=globalThis.laundryVisitor;
+  if(visitor?.active&&sensorSees(mind,visitor))mind.neighbors.push({id:visitor.id,x:visitor.x,y:visitor.y,seenAt:elapsed});
   mind.neighbors.forEach(other=>mind.peopleMemory.set(other.id,{...other}));
   mind.nextSense=elapsed+190;
 }
@@ -226,7 +228,9 @@ function routeStep(mind,dt){
     mind.contacts++;mind.belief[cellIndex(next)]=2;mind.heading=wanted;senseAgent(mind);
     rememberEvent(mind,'A nearby obstruction stopped this step.');finishRoute(mind);mind.scan=1.8;mind.decision='Something blocks this route. I need another way.';return;
   }
-  const other=occupants.find(p=>p!==person&&distance(next,p)<24&&distance(next,p)<distance(person,p));
+  const visitor=globalThis.laundryVisitor;
+  const other=occupants.find(p=>p!==person&&distance(next,p)<24&&distance(next,p)<distance(person,p))
+    ||(visitor?.active&&distance(next,visitor)<28&&distance(next,visitor)<distance(person,visitor)?visitor:null);
   if(other){
     if(mind.blockedFor===0)mind.yields++;
     mind.blockedFor+=dt;mind.waited+=dt;mind.person.activity='letting someone pass';if(mind.trip)mind.trip.yielding=true;
@@ -370,6 +374,12 @@ function cognitiveStep(dt){
   updateLaundryWorld();
   for(const mind of minds.values()){
     const person=mind.person;
+    const visitor=globalThis.laundryVisitor;
+    if(visitor?.active&&visitor.talkingTo===person.id){
+      mind.heading=Math.atan2(visitor.y-person.y,visitor.x-person.x);
+      person.activity='talking to you';mind.decision='A visitor stopped to say hello.';
+      continue;
+    }
     if(elapsed>=mind.nextSense)senseAgent(mind);
     if(draggedOccupant===person)continue;
     if(mind.path.length){routeStep(mind,dt);continue;}

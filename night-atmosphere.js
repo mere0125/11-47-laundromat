@@ -3,11 +3,11 @@ import {Reflector} from './vendor/Reflector.js';
 export function buildAtmosphere(T, scene) {
   scene.background = new T.Color('#0d1b31');
   scene.fog = new T.FogExp2('#0d1b31', .019);
-  const ambient = new T.HemisphereLight('#9fc2fa', '#756a5d', 1.07);
-  const sky = new T.DirectionalLight('#92bafa', 1.02);
+  const ambient = new T.HemisphereLight('#a8c8ef', '#b08a65', .64);
+  const sky = new T.DirectionalLight('#92bafa', .77);
   sky.position.set(-7, 12, 9);
   scene.add(ambient, sky);
-  const luminous = new T.DirectionalLight('#fff0d3', .48);
+  const luminous = new T.DirectionalLight('#ffddb0', .58);
   luminous.position.set(0,6,1.6);
   luminous.target.position.set(1.3,0,-1);
   luminous.castShadow=true;
@@ -102,7 +102,7 @@ export function buildAtmosphere(T, scene) {
       neighborhood.visible=!scan;
       rain.material.uniforms.seconds.value = seconds;
       reflectedRoad.material.uniforms.seconds.value = seconds;
-      luminous.intensity=on?.48:.05;
+      luminous.intensity=on?.58:.05;
       for (const lamp of warm) lamp.intensity = on ? 18 : 1.8;
     }
   };

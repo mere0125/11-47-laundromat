@@ -5,7 +5,7 @@
   --ink: #172334;
 }
 
-#night-walkthrough[hidden], #night-walkthrough [hidden], #night-audio[hidden] { display: none; }
+#night-walkthrough[hidden], #night-walkthrough [hidden], #night-audio[hidden] { display: none !important; }
 body.in-walkthrough { overflow: hidden; }
 #laundromat.walkthrough-underlay {
   position: fixed;
@@ -31,7 +31,7 @@ body.in-walkthrough { overflow: hidden; }
   cursor: grab;
 }
 #night-lens:active { cursor: grabbing; }
-#night-lens:focus-visible { outline: 2px solid #e6c997; outline-offset: -5px; }
+#night-lens:focus-visible { outline: none; }
 .night-shade {
   position: absolute;
   inset: 0;
@@ -167,4 +167,217 @@ body.in-walkthrough { overflow: hidden; }
 }
 @media (prefers-reduced-motion: reduce) {
   .night-shade { transition: none; }
+}
+
+.lens-header #night-menu-toggle { margin-right: 108px; }
+#night-room-menu[hidden] { display:none; }
+.night-room-menu {
+  position:absolute;
+  z-index:9;
+  top:76px;
+  right:clamp(17px,4.5vw,64px);
+  display:grid;
+  grid-template-columns:1fr;
+  gap:3px;
+  padding:9px;
+  width:228px;
+  max-height:calc(100svh - 110px);
+  overflow:auto;
+  background:#0e202bec;
+  border:1px solid #bba6743d;
+  box-shadow:0 16px 60px #020a14a3;
+  border-radius:4px;
+  backdrop-filter:blur(14px);
+}
+#night-walkthrough .night-room-menu button {
+  min-height:35px;
+  text-align:left;
+  background:transparent;
+}
+#night-walkthrough .night-room-menu button:hover { background:#b1aa8830; }
+.night-room-menu button:disabled { opacity:.35; pointer-events:none; }
+#night-walkthrough[data-place="shop"] .night-shade {
+  background:linear-gradient(0deg,#061019b3,transparent 24%),
+    linear-gradient(180deg,#040b1780,transparent 14%);
+}
+#night-walkthrough[data-place="shop"] .lens-foot { bottom:23px; pointer-events:none; }
+#night-walkthrough .lens-story h2 {
+  font:400 27px/1.1 "Yu Mincho","Hiragino Mincho ProN",Georgia,serif;
+  letter-spacing:.12em;
+}
+#night-walkthrough .lens-story #night-viewpoint { margin:0 0 4px; color:#e6d4ac; font-size:12px; }
+#night-walkthrough .lens-story #walker-repair { margin-top:7px; font-size:12px; max-width:34ch; transition:opacity 1.3s; }
+#night-walkthrough .lens-story #walker-repair.quiet { opacity:0; }
+#night-walkthrough .lens-story #walker-shift { max-width:40ch; font-size:12px; }
+.night-crosshair {
+  position:absolute;
+  left:50%;top:50%;
+  width:5px;height:5px;
+  margin:-2.5px 0 0 -2.5px;
+  border:1px solid #fff2d8a8;
+  border-radius:50%;
+  box-shadow:0 1px 4px #061019;
+  pointer-events:none;
+  transition:transform .15s,background .15s;
+}
+.night-crosshair.available { background:#fff2d8; transform:scale(1.6); }
+#night-walkthrough .night-interact {
+  position:absolute;
+  z-index:4;
+  left:50%;
+  bottom:91px;
+  transform:translateX(-50%);
+  min-height:44px;
+  max-width:calc(100vw - 36px);
+  padding:10px 18px 10px 11px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:#081724db;
+  color:#f8e9cb;
+  border:1px solid #af9e704d;
+  box-shadow:0 3px 22px #0209155c;
+  backdrop-filter:blur(8px);
+  font-weight:500;
+  white-space:nowrap;
+}
+.night-interact kbd {
+  display:grid;
+  place-items:center;
+  width:24px;height:24px;
+  border:1px solid #d6b98e85;
+  border-radius:2px;
+  font:500 12px Arial,sans-serif;
+}
+#night-walk-hint {
+  position:absolute;
+  left:50%;
+  bottom:23px;
+  margin:0;
+  transform:translateX(-50%);
+  color:#dfdbd0ba;
+  font-size:12px;
+  text-shadow:0 1px 5px #000;
+  transition:opacity 2s;
+  white-space:nowrap;
+  pointer-events:none;
+}
+#night-walk-hint.quiet { opacity:0; }
+.night-thumbstick { display:none; }
+.night-dialogue {
+  position:absolute;
+  z-index:13;
+  left:50%;
+  bottom:44px;
+  width:min(590px,calc(100% - 36px));
+  max-height:calc(100svh - 100px);
+  overflow:auto;
+  transform:translateX(-50%);
+  padding:24px 28px 20px;
+  color:#ede3cf;
+  background:linear-gradient(145deg,#182a30ef,#10202af5);
+  border:1px solid #c3a97150;
+  border-radius:4px;
+  box-shadow:0 12px 65px #030811c9;
+  backdrop-filter:blur(18px);
+}
+#night-walkthrough .night-dialogue .tale-close {
+  position:absolute;right:10px;top:7px;
+  min-height:29px;padding:3px 9px;
+  background:transparent;
+  font-size:24px;font-weight:300;color:#b9b9aa;
+}
+.tale-speaker { margin:0 0 6px; color:#c4bd9e; font-size:12px; }
+.night-dialogue h2 {
+  margin:0 0 18px;
+  color:#fff0d2;
+  font:400 32px/1.1 "Instrument Serif",Georgia,serif;
+  letter-spacing:-.035em;
+}
+.night-dialogue h2:focus { outline:none; }
+.tale-lines p { margin:10px 0; font:400 15px/1.6 Georgia,serif; color:#e1ded0; }
+.tale-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:20px; }
+#night-walkthrough .tale-actions button { background:#cbb68620; min-height:35px; color:#f4e7c9; }
+#night-walkthrough .tale-actions button:last-child { margin-left:auto; }
+#night-walkthrough[data-reading="true"] .lens-foot,
+#night-walkthrough[data-reading="true"] .lens-header,
+#night-walkthrough[data-reading="true"] #night-walk-hint,
+#night-walkthrough[data-reading="true"] .night-crosshair { opacity:0;pointer-events:none; }
+.tale-lines label { display:block; font-size:12px; margin-top:17px; color:#c0c1ad; }
+.tale-lines textarea {
+  display:block;width:100%;resize:vertical;
+  min-height:75px;max-height:150px;
+  margin-top:6px;padding:10px;
+  background:#0719257d;border:1px solid #bdac7861;
+  border-radius:3px;color:#f4e8cb;
+  font:400 15px/1.4 Georgia,serif;
+}
+.tale-lines textarea:focus { outline:1px solid #e6c18e; }
+@media (pointer:coarse) {
+  .night-thumbstick {
+    position:absolute;
+    z-index:6;
+    left:28px;bottom:118px;
+    width:91px;height:91px;
+    display:grid;place-items:center;
+    border-radius:50%;
+    border:1px solid #e5ddc63d;
+    background:#07182633;
+    touch-action:none;
+  }
+  .thumbstick-knob {
+    display:block;width:38px;height:38px;
+    border-radius:50%;
+    background:#ded8bc4a;
+    border:1px solid #e2d4b94d;
+    pointer-events:none;
+  }
+  .thumbstick-label { position:absolute;bottom:-22px;color:#ded5bf9c;font-size:11px;pointer-events:none; }
+  #night-walk-hint { font-size:0; }
+  #night-walk-hint::after { content:"Left thumb to walk - drag to look - tap to use";font-size:11px; }
+}
+@media (max-width:760px) {
+  .lens-header #night-menu-toggle { margin-right:102px; }
+  .lens-header p { max-width:17ch; line-height:1.4; font-size:11px; }
+  .night-room-menu { top:72px; right:17px; }
+  #night-walkthrough .night-interact { bottom:103px; padding-right:12px; font-size:12px; min-height:42px; }
+  .night-dialogue { bottom:25px; padding:21px 21px 17px; }
+  .night-dialogue h2 { font-size:28px; margin-bottom:13px; }
+  .tale-lines p { font-size:14px; }
+  #night-walkthrough .lens-story h2 { font-size:24px; }
+  #night-walkthrough .lens-story #walker-repair { max-width:28ch; font-size:11px; }
+  #night-walkthrough[data-place="shop"] .lens-foot { bottom:44px; }
+  #night-walk-hint { bottom:16px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  #night-walk-hint, .night-crosshair, #night-walkthrough .lens-story #walker-repair {transition:none;}
+}
+#night-walkthrough .lens-story #night-pocket { margin-top:7px;color:#efdaa8;font-size:11px; }
+@media (max-width:760px) {
+  .night-thumbstick {
+    position:absolute;z-index:6;left:25px;bottom:127px;
+    width:88px;height:88px;display:grid;place-items:center;
+    border-radius:50%;border:1px solid #e5ddc63d;
+    background:#07182633;touch-action:none;
+  }
+  .thumbstick-knob {
+    display:block;width:38px;height:38px;border-radius:50%;
+    background:#ded8bc4a;border:1px solid #e2d4b94d;pointer-events:none;
+  }
+  .thumbstick-label {position:absolute;bottom:-22px;color:#ded5bf9c;font-size:11px;pointer-events:none;}
+  #night-walk-hint {font-size:0;}
+  #night-walk-hint::after {content:"Left thumb to walk - drag to look - tap to use";font-size:10px;}
+  #night-walkthrough .night-interact {bottom:107px;max-width:calc(100vw - 142px);left:auto;right:17px;transform:none;white-space:normal;}
+  .night-interact kbd {display:none;}
+}
+#night-curtain {position:absolute;z-index:30;inset:0;background:#07111d;opacity:0;pointer-events:none;transition:opacity .18s;}
+#night-curtain.closed {opacity:1;}
+@media (max-width:760px) {
+  .night-thumbstick {bottom:176px;}
+}
+@media (pointer:coarse) and (min-width:761px) {
+  .night-thumbstick {bottom:164px;}
+}
+@media (prefers-reduced-motion:reduce) {
+  #night-curtain {transition:none;}
 }

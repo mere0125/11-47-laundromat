@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="opening.css?v=20261114-night" />
     <link rel="stylesheet" href="night-story.css?v=20261114-night" />
     <link rel="stylesheet" href="layout-studio.css?v=20261114-night" />
-    <link rel="stylesheet" href="night-walkthrough.css?v=20261114-night2" />
+    <link rel="stylesheet" href="night-walkthrough.css?v=20261119-play6" />
   </head>
   <body>
     <main id="opening" class="opening">
@@ -28,11 +28,23 @@
     <main id="night-walkthrough" hidden data-place="street">
       <canvas id="night-lens" tabindex="0" aria-label="Three-dimensional laundromat at night"></canvas>
       <div class="night-shade" aria-hidden="true"></div>
+      <div id="night-curtain" aria-hidden="true"></div>
       <div class="lens-header">
         <p id="lens-help">Drag to turn the street</p>
-        <button id="watch-scan" type="button" aria-pressed="false">Point cloud</button>
+        <button id="night-menu-toggle" type="button" aria-expanded="false" aria-controls="night-room-menu" hidden>Room menu</button>
       </div>
       <p id="scan-caption" hidden>Surface points sampled from the 3D model</p>
+      <nav id="night-room-menu" class="night-room-menu" aria-label="Laundromat tools" hidden>
+        <button id="watch-attendant" type="button" aria-pressed="false">Watch the attendant</button>
+        <button id="watch-place" type="button">Back by the door</button>
+        <button id="watch-dryer" type="button">Near Dryer 03</button>
+        <button id="watch-layouts" type="button">Try tomorrow’s layout</button>
+        <button id="watch-plan" type="button">Floor plan and distances</button>
+        <button id="watch-scan" type="button" aria-pressed="false">Point cloud</button>
+        <button id="night-mouse-look" type="button">Mouse look</button>
+        <button id="night-fullscreen" type="button">Full screen</button>
+        <button id="walk-out" type="button">Step outside</button>
+      </nav>
       <div id="street-caption" class="lens-foot">
         <div>
           <h1><span>11:47</span> Laundromat</h1>
@@ -42,21 +54,18 @@
       </div>
       <div id="shop-caption" class="lens-foot shop-foot" hidden>
         <div class="lens-story">
-          <p id="night-viewpoint" hidden>Inside by the door</p>
-          <h2>Dryer 03</h2>
+          <p id="night-viewpoint" hidden>11:47</p>
+          <h2 lang="ja">雨待ち</h2>
           <p id="walker-repair">The drum is still.</p>
           <p id="walker-shift" hidden></p>
-          <div class="lens-actions">
-            <button id="watch-attendant" type="button" aria-pressed="false">Follow the attendant</button>
-            <button id="watch-dryer" type="button">Look at Dryer 03</button>
-            <button id="watch-place" type="button">By the door</button>
-          </div>
+          <p id="night-pocket" hidden>In your pocket - a blue sock</p>
         </div>
-        <div class="lens-navigation">
-          <button id="watch-layouts" type="button" class="lens-action">Try a new layout</button>
-          <button id="watch-plan" type="button">Floor plan and distances</button>
-          <button id="walk-out" type="button">Step outside</button>
-        </div>
+      </div>
+      <div id="night-crosshair" class="night-crosshair" aria-hidden="true" hidden></div>
+      <button id="night-interact" class="night-interact" type="button" hidden><kbd>E</kbd><span></span></button>
+      <p id="night-walk-hint" hidden>WASD or arrows to walk - drag to look - E to use</p>
+      <div id="night-thumbstick" class="night-thumbstick" role="group" aria-label="Touch movement control" hidden>
+        <span class="thumbstick-knob"></span><span class="thumbstick-label">walk</span>
       </div>
     </main>
     <button id="night-audio" type="button" aria-pressed="false" hidden>Sound off</button>
@@ -261,7 +270,7 @@
     </main>
     <script src="app.js?v=20261114-night"></script>
     <script src="scene.js?v=20261114-final1"></script>
-    <script src="agents.js?v=20261114-final1"></script>
+    <script src="agents.js?v=20261119-play6"></script>
     <script src="memory-view.js?v=20261112-memory"></script>
     <script src="opening.js?v=20261114-final1"></script>
     <script src="storefront-weather.js?v=1"></script>
@@ -270,7 +279,7 @@
     <script src="layout-drawing.js?v=20261114-final1"></script>
     <script src="layout-studio.js?v=20261114-night"></script>
     <script src="night-story.js?v=1"></script>
-    <script src="laundry-model.js?v=20261114-night"></script>
-    <script type="module" src="night-walkthrough.js?v=20261114-night2"></script>
+    <script src="laundry-model.js?v=20261119-play6"></script>
+    <script type="module" src="night-walkthrough.js?v=20261119-play6"></script>
   </body>
 </html>

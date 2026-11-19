@@ -112,6 +112,44 @@ export function makeNightSound() {
     }
   }
 
+  function step() {
+    if (!enabled || !graph || document.hidden || graph.context.state !== 'running') return;
+    const {context,volume}=graph;
+    const start=context.currentTime;
+    const noise=context.createBuffer(1,Math.floor(context.sampleRate*.075),context.sampleRate);
+    const samples=noise.getChannelData(0);
+    for(let i=0;i<samples.length;i++) samples[i]=(Math.random()*2-1)*Math.exp(-i/samples.length*9);
+    const source=context.createBufferSource();
+    const filter=context.createBiquadFilter();
+    const gain=context.createGain();
+    source.buffer=noise;
+    filter.type='lowpass';
+    filter.frequency.value=590;
+    gain.gain.value=.055;
+    source.connect(filter).connect(gain).connect(volume);
+    source.start(start);
+    source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();};
+  }
+
+  function touch(kind) {
+    if (!enabled || !graph || document.hidden || graph.context.state !== 'running') return;
+    const {context,volume}=graph;
+    const oscillator=context.createOscillator();
+    const envelope=context.createGain();
+    const time=context.currentTime+.006;
+    const coin=kind==='coin';
+    oscillator.type=coin?'sine':'triangle';
+    oscillator.frequency.setValueAtTime(coin?1740:kind==='paper'?160:410,time);
+    oscillator.frequency.exponentialRampToValueAtTime(coin?2110:85,time+.055);
+    envelope.gain.setValueAtTime(0,time);
+    envelope.gain.linearRampToValueAtTime(coin?.025:.011,time+.003);
+    envelope.gain.exponentialRampToValueAtTime(.0001,time+(coin?.24:.08));
+    oscillator.connect(envelope).connect(volume);
+    oscillator.start(time);
+    oscillator.stop(time+.25);
+    oscillator.onended=()=>{oscillator.disconnect();envelope.disconnect();};
+  }
+
   function dispose() {
     if (disposed) return;
     disposed = true;
@@ -124,7 +162,7 @@ export function makeNightSound() {
   }
 
   document.addEventListener('visibilitychange', onVisibilityChange);
-  return {enable, disable, scene, door, dispose};
+  return {enable, disable, scene, door, step, touch, dispose};
 
   function buildGraph(context) {
     const volume = context.createGain();
