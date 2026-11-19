@@ -14,6 +14,7 @@
     const textures = [];
     const materials = [];
     const geometries = [];
+    const fanRotors = [];
     let seed = 1147;
     const random = () => {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
@@ -47,6 +48,7 @@
     const ledActive = material('#a6e6cf', {emissive: '#82dcb6', emissiveIntensity: .7});
     const ledDone = material('#f1cb84', {emissive: '#dfa75d', emissiveIntensity: .7});
     const ledFault = material('#f1827d', {emissive: '#d5354a', emissiveIntensity: .75});
+    const paperTape = material('#d2b87d',{roughness:.95,transparent:true,opacity:.76,depthWrite:false});
 
     function mesh(target, shape, finish, x, y, z, sx = 1, sy = 1, sz = 1) {
       const object = new THREE.Mesh(shape, finish);
@@ -113,6 +115,25 @@
         ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 5 + random() * 55, y + 1); ctx.stroke();
       }
     });
+    // Cotton has a surface, a stitched selvedge and a soft fold, rather than a painted box.
+    const cottonWeave = texture(128,128,ctx=>{
+      ctx.fillStyle='#eae6dc';ctx.fillRect(0,0,128,128);
+      for(let row=0;row<128;row+=4)for(let column=0;column<128;column+=4){
+        ctx.fillStyle=(row+column)%8?'#aaa99c':'#fffaf0';
+        ctx.fillRect(column,row,3,1);ctx.fillRect(column+1,row+1,1,3);
+      }
+    });
+    cottonWeave.wrapS=cottonWeave.wrapT=THREE.RepeatWrapping;cottonWeave.repeat.set(3,3);
+    for(const textile of textiles){textile.map=cottonWeave;textile.bumpMap=cottonWeave;textile.bumpScale=.0018;}
+    const foldedCloth = geometry(new THREE.BoxGeometry(1,1,1,16,4,10));
+    const clothVertices=foldedCloth.attributes.position;
+    for(let i=0;i<clothVertices.count;i++){
+      const x=clothVertices.getX(i),y=clothVertices.getY(i),z=clothVertices.getZ(i);
+      const edge=Math.min(1,(.5-Math.abs(x))*12,(.5-Math.abs(z))*12);
+      clothVertices.setY(i,y*(.86+.14*Math.max(0,edge))+.045*Math.sin(x*14+z*7)*Math.cos(z*13));
+    }
+    foldedCloth.computeVertexNormals();
+    const stitch = material('#d8c8a4',{roughness:1});
     const clothBlue = material('#3d6b8b', {roughness: .98});
     const lampShade = material('#536c5b', {metalness: .35, roughness: .48});
     const lampLining = material('#eed8a4', {emissive: '#ffc36f', emissiveIntensity: .75, side: THREE.DoubleSide});
@@ -133,14 +154,14 @@
       const rows = 29;
       const w = 1536 / columns;
       const h = 896 / rows;
-      ctx.fillStyle = '#454e4b';
+      ctx.fillStyle = '#665e4e';
       ctx.fillRect(0, 0, 1536, 896);
       for (let row = 0; row < rows; row++) for (let column = 0; column < columns; column++) {
-        const gray = Math.round(112 + random() * 18 + Math.sin(column * .62 + row * .78) * 5);
+        const gray = Math.round(133 + random() * 17 + Math.sin(column * .62 + row * .78) * 5);
         const x = column * w, y = row * h;
-        ctx.fillStyle = `rgb(${gray - 3},${gray + 7},${gray + 4})`;
+        ctx.fillStyle = `rgb(${gray + 9},${gray + 2},${gray - 13})`;
         ctx.fillRect(x + .7, y + .7, w - 1.5, h - 1.6);
-        ctx.fillStyle = '#eef0dd23';
+        ctx.fillStyle = '#fff1ce23';
         ctx.fillRect(x + 1, y + 1, w - 3, .8);
         for (let grain = 0; grain < 21; grain++) {
           ctx.fillStyle = random() < .4 ? '#e9e1d31f' : '#252b3523';
@@ -152,10 +173,10 @@
         }
       }
       const ends = ctx.createLinearGradient(0, 0, 0, 896);
-      ends.addColorStop(0, '#1215213b');
+      ends.addColorStop(0, '#3e33273b');
       ends.addColorStop(.3, '#12152100');
       ends.addColorStop(.72, '#14213200');
-      ends.addColorStop(1, '#14213226');
+      ends.addColorStop(1, '#51433726');
       ctx.fillStyle = ends;
       ctx.fillRect(0, 0, 1536, 896);
     });
@@ -167,18 +188,18 @@
     floor.receiveShadow = true;
 
     const ceilingTiles = texture(768,512,ctx=>{
-      ctx.fillStyle='#666d72'; ctx.fillRect(0,0,768,512);
-      for (let y=0;y<512;y+=64) for (let x=0;x<768;x+=96) {
-        const shade=119+Math.round(random()*10);
-        ctx.fillStyle=`rgb(${shade},${shade+2},${shade+1})`;
-        ctx.fillRect(x+1,y+1,94,62);
+      ctx.fillStyle='#554c3c'; ctx.fillRect(0,0,768,512);
+      for (let y=0;y<512;y+=32) for (let x=0;x<768;x+=384) {
+        const shade=129+Math.round(random()*14);
+        ctx.fillStyle=`rgb(${shade+17},${shade+5},${shade-15})`;
+        ctx.fillRect(x+1,y+1,382,30);
         for (let i=0;i<35;i++) {
-          ctx.fillStyle='#383b3c35';
-          ctx.fillRect(x+2+random()*91,y+2+random()*59,random()*2+.5,.8);
+          ctx.fillStyle=i%3?'#493a292b':'#f0d4a52b';
+          ctx.fillRect(x+2+random()*376,y+2+random()*27,random()*55+5,.6);
         }
       }
     });
-    const ceiling = face(group,material('#d1d4cd',{map:ceilingTiles,roughness:.92}),
+    const ceiling = face(group,material('#dbcaad',{map:ceilingTiles,roughness:.92}),
       (min.x+max.x)/2,3.49,(min.z+max.z)/2,max.x-min.x,max.z-min.z);
     ceiling.rotation.x=Math.PI/2;
     ceiling.userData.noScan=true;
@@ -334,6 +355,7 @@
       face(target, maintenance, -w * .30, .24, frontZ + .034, .094, .071);
       const faultTag = face(target, faultNotice, -.031, cy + radius * .38, frontZ + .152, w * .69, .21);
       faultTag.rotation.z = -.078;
+      for(const side of [-1,1])face(faultTag,paperTape,side*.36,.43,.008,.26,.12).rotation.z=side*.18;
       faultTag.visible = false;
       machines.set(index, {group: target, drum, led, faultTag, load: drum.children.slice(1)});
     }
@@ -358,10 +380,22 @@
         target.add(stack);
         for (let cloth = 0; cloth < 2 + (i + index) % 3; cloth++) {
           const finish = textiles[(i + cloth + index) % textiles.length];
-          box(stack, finish, cloth * .012, cloth * .039, 0, .36 - cloth * .018, .036, .26 - cloth * .011);
+          const length=.36-cloth*.018,depth=.26-cloth*.011;
+          mesh(stack, foldedCloth, finish, cloth * .012, cloth * .039, 0, length, .036, depth);
           mesh(stack, sphereGeo, finish, .008, cloth * .039 + .003, .124, .175, .020, .030);
           box(stack, textiles[(i + cloth + index + 1) % textiles.length], .04, cloth * .039 + .019, .07, .12, .002, .025);
+          box(stack,stitch,cloth*.012,cloth*.039+.014,depth*.44,length*.88,.002,.003);
+          if(cloth===0)box(stack,material('#ece0c0',{roughness:1}),length*.33,.002,depth*.53,.035,.011,.022);
         }
+      }
+      // A canvas shopping bag lives under the table, safely inside the same obstacle footprint.
+      const bag=new THREE.Group();bag.position.set(-w*.33,.035,-d*.06);bag.rotation.y=.1;target.add(bag);
+      const canvas=material('#bcb093',{map:cottonWeave,bumpMap:cottonWeave,bumpScale:.0018,roughness:1});
+      mesh(bag,foldedCloth,canvas,0,.19,0,.36,.36,.22);
+      box(bag,woodEdge,0,.02,0,.35,.018,.215);
+      for(const z of [-.095,.095]){
+        const handle=new THREE.CatmullRomCurve3([new THREE.Vector3(-.10,.34,z),new THREE.Vector3(-.10,.49,z),new THREE.Vector3(.10,.49,z),new THREE.Vector3(.10,.34,z)]);
+        mesh(bag,geometry(new THREE.TubeGeometry(handle,16,.009,5,false)),canvas,0,0,0);
       }
       if (tableCount++ === 0) {
         const sock = new THREE.Group();
@@ -422,6 +456,14 @@
       for (const x of [-w / 2, w / 2]) face(target, wireFace, x, .675, 0, d, .369).rotation.y = Math.PI / 2;
       box(target, navy, 0, .95, -d / 2, w * .82, .049, .054);
       mesh(target, sphereGeo, textiles[index % textiles.length], .04, .523, -.09, w * .34, .07, d * .28);
+      // Scuffed rim guards, a wrapped handle and a paper number distinguish the used carts.
+      for(const x of [-w*.48,w*.48])box(target,woodEdge,x,.89,0,.025,.026,d*.95);
+      for(let wrap=0;wrap<9;wrap++)box(target,woodEdge,-w*.29+wrap*w*.072,.954,-d/2,.012,.055,.061);
+      const cartTag=decal(128,80,ctx=>{
+        ctx.fillStyle='#d2c6a1';ctx.fillRect(0,0,128,80);
+        ctx.fillStyle='#5c6250';ctx.font='45px cursive';ctx.textAlign='center';ctx.fillText(index%2?'2':'1',64,58);
+      });
+      const tag=face(target,cartTag,0,.76,d/2+.006,.10,.062);tag.rotation.z=.1;
     }
 
     function bench(target, w, d) {
@@ -433,10 +475,17 @@
       box(target, satin, 0, .35, 0, w - .15, .068, d * .71);
       for (let i = 0; i < sections; i++) {
         const x = (-.5 + (i + .5) / sections) * w;
-        const seat = box(target, i === 2 ? jade : navy, x, .46, 0, w / sections - .016, .10, d - .027);
+        const seat = box(target, i === 2 ? jade : wood, x, .46, 0, w / sections - .016, .10, d - .027);
         seat.castShadow = true;
         box(target, satin, x, .70, d * .39, .041, .40, .036);
-        box(target, i === 2 ? jade : navy, x, .845, d * .41, w / sections - .015, .203, .067);
+        box(target, i === 2 ? jade : wood, x, .845, d * .41, w / sections - .015, .203, .067);
+        for(const sx of [-1,1])roller(target,satin,x+sx*w/sections*.36,.845,d*.41+.039,.008,.005);
+      }
+      const cushion=mesh(target,foldedCloth,textiles[1],-w*.18,.536,-.015,w*.19,.065,d*.82);
+      cushion.rotation.y=.035;
+      for(const x of [-w*.3,-w*.24]){
+        mesh(target,sphereGeo,woodEdge,x,.055,-d*.18,.08,.025,.13);
+        mesh(target,sphereGeo,textiles[1],x,.078,-d*.16,.078,.021,.085);
       }
       const magazine = decal(128, 196, ctx => {
         ctx.fillStyle = '#c4b69a'; ctx.fillRect(0, 0, 128, 196);
@@ -583,6 +632,21 @@
       face(target, sign, -.22, 1.65, d / 2 + .065, .51, .144);
       box(target, charcoal, w * .29, 2.07, d / 2 + .012, .49, .278, .026);
       for (let louver = 0; louver < 7; louver++) box(target, satin, w * .29, 1.960 + louver * .035, d / 2 + .033, .438, .013, .024);
+      const fan=new THREE.Group();fan.name='The small circulation fan';fan.position.set(w*.18,2.83,d/2+.03);target.add(fan);
+      box(fan,enamel,0,-.28,-.015,.10,.35,.065);
+      roller(fan,enamel,0,0,0,.223,.09);
+      roller(fan,charcoal,0,0,.053,.202,.005);
+      const rotor=new THREE.Group();rotor.position.z=.071;fan.add(rotor);fanRotors.push(rotor);
+      const blade=new THREE.Shape();blade.moveTo(.015,.012);blade.quadraticCurveTo(.16,.01,.173,.105);
+      blade.quadraticCurveTo(.12,.153,.05,.12);blade.quadraticCurveTo(.018,.08,.015,.012);
+      const blades=geometry(new THREE.ShapeGeometry(blade,12));
+      for(let i=0;i<3;i++)mesh(rotor,blades,jade,0,0,0).rotation.z=i*Math.PI*2/3;
+      roller(fan,enamel,0,0,.089,.036,.025);
+      for(const radius of [.10,.15,.205])mesh(fan,geometry(new THREE.TorusGeometry(radius,.0033,5,48)),warmSteel,0,0,.101);
+      for(let i=0;i<8;i++)box(fan,warmSteel,0,0,.105,.004,.42,.004).rotation.z=i*Math.PI/8;
+      const pull=new THREE.CatmullRomCurve3([new THREE.Vector3(.17,-.06,.08),new THREE.Vector3(.18,-.31,.08),new THREE.Vector3(.165,-.38,.08)]);
+      mesh(fan,geometry(new THREE.TubeGeometry(pull,10,.0025,4,false)),woodEdge,0,0,0);
+      mesh(fan,sphereGeo,woodEdge,.165,-.39,.08,.011,.019,.011);
     }
 
     for (const [index, rect] of data.obstacles.entries()) {
@@ -684,8 +748,25 @@
     });
     face(group,notice,.92,2.19,-3.85,1.01,.68);
 
-    const tubeCool = material('#e4d2b7', {emissive: '#f4d6aa', emissiveIntensity: 1.08, roughness: .29});
-    const tubeWarm = material('#f5d9ac', {emissive: '#f6cc90', emissiveIntensity: 1.22, roughness: .31});
+    // Tape casts a slight edge against the old plaster; the papers belong to the room.
+    for(const [x,y,width,height] of [[.92,2.19,1.01,.68],[-2.5,2.36,2.075,1.039]]){
+      for(const side of [-1,1]){
+        const tape=face(group,paperTape,x+side*width*.38,y+height*.48,-3.815,.14,.047);
+        tape.rotation.z=side*.13;
+      }
+    }
+    const corner=new THREE.Group();corner.name='Window reading light';corner.position.set(-2.23,2.05,5.29);group.add(corner);
+    box(corner,woodEdge,0,.015,.11,.15,.65,.09);
+    box(corner,satin,0,.04,.015,.052,.27,.14);
+    mesh(corner,geometry(new THREE.CylinderGeometry(.055,.15,.17,28,1,true)),lampShade,0,-.07,-.05);
+    mesh(corner,geometry(new THREE.CylinderGeometry(.05,.142,.159,28,1,true)),lampLining,0,-.073,-.05);
+    mesh(corner,sphereGeo,lampLining,0,-.11,-.05,.035,.04,.035);
+    const readingLight=new THREE.SpotLight('#ffcb8b',5.5,4.5,.72,.85,2);
+    readingLight.position.set(0,-.13,-.05);readingLight.target.position.set(.1,-1.45,-1.34);
+    corner.add(readingLight,readingLight.target);lights.push({lamp:readingLight,intensity:5.5});
+
+    const tubeCool = material('#efd0a5', {emissive: '#f0c38a', emissiveIntensity: .95, roughness: .29});
+    const tubeWarm = material('#f3d09c', {emissive: '#f0c38a', emissiveIntensity: 1.0, roughness: .31});
     const circuit = material('#4b515d', {metalness: .45});
     const span = Math.abs(max.x - min.x);
     const center = (max.x + min.x) / 2;
@@ -705,8 +786,8 @@
           box(group, navy, x + end * (length / 2 + .015), y + .022, location.z, .052, .090, .218);
           box(group, circuit, x + end * .68, y + .119, location.z, .018, .149, .018);
         }
-        const intensity = warm ? 9 : 6.5;
-        const lamp = new THREE.PointLight(warm ? '#ffcf8c' : '#efd6b0', intensity, 8, 2);
+        const intensity = warm ? 5.5 : 4.8;
+        const lamp = new THREE.PointLight(warm ? '#f5c992' : '#f0cda0', intensity, 8, 2);
         lamp.position.set(x, y - .122, location.z);
         group.add(lamp);
         lights.push({lamp, intensity});
@@ -747,13 +828,17 @@
     }
 
     function updateLighting(enabled) {
-      tubeCool.emissiveIntensity = enabled ? 1.08 : 0;
-      tubeWarm.emissiveIntensity = enabled ? 1.22 : 0;
-      tubeCool.color.set(enabled ? '#e4d2b7' : '#656b70');
-      tubeWarm.color.set(enabled ? '#f5d9ac' : '#746e65');
+      tubeCool.emissiveIntensity = enabled ? .95 : 0;
+      tubeWarm.emissiveIntensity = enabled ? 1.0 : 0;
+      tubeCool.color.set(enabled ? '#efd0a5' : '#656b70');
+      tubeWarm.color.set(enabled ? '#f3d09c' : '#746e65');
       for (const {lamp, intensity} of lights) lamp.intensity = enabled ? intensity : 0;
       // The little task lamp has its own switch; it remains a pocket of warm light.
       if (storyProps.tableLamp) storyProps.tableLamp.intensity = tableLightOn ? 9 : 0;
+    }
+
+    function updateLife(time = 0) {
+      for (const rotor of fanRotors) rotor.rotation.z = -time * 8.5;
     }
 
     function setStoryState(state = {}) {
@@ -775,7 +860,7 @@
 
     const initialMachines = Array.isArray(data.machines) ? data.machines : [...(data.machines?.values?.() || [])];
     for (const machine of initialMachines) updateMachine(machine.index, machine);
-    return {group, machines, interactables, setStoryState, updateMachine, updateLighting, dispose() {
+    return {group, machines, interactables, setStoryState, updateMachine, updateLighting, updateLife, dispose() {
       parent.remove(group);
       for (const item of textures) item.dispose();
       for (const item of materials) item.dispose();

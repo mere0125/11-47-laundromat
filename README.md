@@ -32,9 +32,17 @@ The colored paths retain the last three movement events for fourteen seconds. Th
 
 The scene is drawn in browser code. Insert a coin to wake a drum, click a person to make them point A, and choose point B on the receipt.
 
+## Walk inside
+
+The opening scene is a navigable Three.js room. Walk with WASD or the arrow keys, drag to look, and use E near a person or object. Mobile controls provide a thumbstick. The floor-plan and private-memory views remain available from the room menu.
+
+Residents use the CC0 beta-era VRoid characters Vivi and HairSample_Male by pixiv. Eyes, hair, faces, clothing surfaces and morph targets come from those authored models. Local variations add clothing and hair palettes, glasses, a scarf and the attendant's apron. Walk and idle rotations are retargeted from Quaternius's CC0 Universal Animation Library. Distance traveled controls walking cadence; task-specific hand poses, blinking, gaze and hair response follow the live agent state. Detailed characters use the same positions and decisions as the analytical views. They do not give agents extra knowledge.
+
+The interior adds warm local lighting, timber wall panels, worn tile, stitched laundry, canvas bags, wire carts, a reading lamp and an animated fan. The scene remains a modeled interpretation rather than a scan of a real Japanese shop. See [asset sources and license details](assets/people/SOURCES.txt).
+
 ## The cutaway room
 
-The default view is a procedural 2.5D cutaway built in Canvas. Furniture, enamel casings, clothes, little paper figures, wall glazing, rain and light are drawn in code. No generated images, downloaded scene models, or external rendering libraries are used.
+The alternative 2.5D cutaway is built in Canvas. Furniture, enamel casings, clothes, paper figures, wall glazing, rain and light in this analytical view are drawn in code.
 
 Choose a person and click an open floor tile to walk there. Routing uses an eight-neighbor grid with collision-checked edges against the same furniture footprints used by the distance calculations. Dragging is also available. Arrow keys move the selected person when the canvas is focused. Camera controls turn and zoom the scene. The floor-plan button exposes the same world from overhead, and the sight/attention button toggles analytical fields.
 

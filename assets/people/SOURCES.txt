@@ -1,0 +1,49 @@
+Original character models by VRoid Project / pixiv Inc. Licensed CC0.
+These are beta-era models, not the current VRoidPreset_A–Z collection.
+
+vivi.vrm
+Original: Vivi, renamed AvatarSample_E (beta AvatarSample_2).
+Public distribution: https://opengameart.org/sites/default/files/avatarsample_e.zip
+Primary CC0 license: https://vroid.pixiv.help/hc/en-us/articles/360014900273
+Official rename: https://vroid.pixiv.help/hc/en-us/articles/4402035114777
+The original embedded metadata says "Other" and links to permissive VRoid Hub
+terms; that metadata is preserved. The creator's model-specific FAQ explicitly
+dedicates beta Vivi to CC0.
+
+companion.vrm
+Original: HairSample_Male from VRoid Studio beta 0.14.0.
+Public distribution: https://opengameart.org/sites/default/files/hairsample_male.zip
+Primary CC0 license list, explicitly including HairSample_Male:
+https://vroid.pixiv.help/hc/en-us/articles/4402614652569
+Embedded original metadata also declares CC0.
+
+Distribution context: https://opengameart.org/content/vroid-studio-cc0-models
+Models are authored 3D assets. No generative image or model creation was used.
+
+Local preparation
+Geometry, skin weights, skeletons, morph targets and license metadata unchanged.
+Textures capped at 1024px; embedded thumbnails reduced to 256px. Opaque diffuse
+images use JPEG quality 90, without chroma subsampling. Alpha and normal maps
+remain lossless PNG after any resizing. Small palettes are lossless, exact-color
+palettes. Texture/image indices are unchanged. No animation clips are embedded.
+
+Material map for clothing variations (material index -> texture -> image)
+Vivi dress: 10 F00_002_01_Onepice_01_CLOTH -> 17 -> 17 (RGBA PNG)
+Vivi shoes: 11 F00_002_01_Shoes_01_CLOTH -> 18 -> 18 (RGBA PNG)
+Vivi body skin: 9 F00_002_02_Body_00_SKIN -> 15 -> 15
+Vivi hair: 12 F00_000_HairBack_00_HAIR -> 19 -> 19
+Vivi hair: 13/14/15 F00_000_Hair_00_HAIR_01/02/03 -> 22/25/26 -> 22/25/26
+Companion hoodie: 10 M00_006_01_Tops_01_CLOTH -> 17 -> 17
+Companion trousers: 11 M00_001_01_Bottoms_01_CLOTH -> 18 -> 18 (RGBA PNG)
+Companion shoes: 12 M00_001_01_Shoes_01_CLOTH -> 19 -> 19
+Companion body skin: 9 M00_001_01_Body_00_SKIN -> 15 -> 15
+Companion hair: 13 F00_000_Hair_00_HAIR -> 20 -> 20
+Face, eye, skin and hair materials remain separate from clothing.
+
+Authored movement clips
+Quaternius, Universal Animation Library, Standard
+Creator https://quaternius.com/packs/universalanimationlibrary.html
+Download https://quaternius.itch.io/universal-animation-library
+License CC0 1.0
+Eight in-place walk, idle and sitting clips trimmed from the creator's Standard GLB.
+Animation and skeleton channels remain unchanged. Retargeted to the residents at runtime.

@@ -210,9 +210,30 @@ export function buildStreet(THREE, parent) {
     aged.addColorStop(0,'#5b604022');aged.addColorStop(.8,'#fff0cc00');aged.addColorStop(1,'#655f462b');
     ctx.fillStyle=aged;ctx.fillRect(0,0,w,h);
   });
-  const plaster=new THREE.MeshStandardMaterial({map:plasterMap,color:'#e3dcc3',roughness:.97});
-  const lowerWall=material('#47635b',.85);
-  const rail=material('#544c3b',.71);
+  const plaster=new THREE.MeshStandardMaterial({map:plasterMap,color:'#ead8b3',roughness:.97,bumpMap:plasterMap,bumpScale:.002});
+  const panelGrain=canvasMap(1536,256,(ctx,w,h)=>{
+    ctx.fillStyle='#9b744b';ctx.fillRect(0,0,w,h);
+    for(let board=0;board<64;board++){
+      const x=board*24,shade=140+Math.round(random()*24);
+      ctx.fillStyle=`rgb(${shade+38},${shade+8},${shade-31})`;ctx.fillRect(x+1,0,22,h);
+      for(let grain=0;grain<13;grain++){
+        ctx.strokeStyle=grain%4?'#5c3b2528':'#f0cf9240';ctx.lineWidth=.4+random()*.7;
+        const grainX=x+2+random()*19;
+        ctx.beginPath();ctx.moveTo(grainX,0);ctx.bezierCurveTo(grainX-2,84,grainX+2,171,grainX,h);ctx.stroke();
+      }
+      if(board%9===4){
+        ctx.strokeStyle='#61452750';ctx.lineWidth=1.2;
+        ctx.beginPath();ctx.ellipse(x+11,65+board%3*42,3,14,0,0,Math.PI*2);ctx.stroke();
+      }
+      ctx.fillStyle='#3c2f2360';ctx.fillRect(x,0,1,h);
+      ctx.fillStyle='#f8e2b52b';ctx.fillRect(x+1,0,1,h);
+    }
+    const polish=ctx.createLinearGradient(0,0,0,h);
+    polish.addColorStop(0,'#f1d5a20d');polish.addColorStop(.76,'#4b321a00');polish.addColorStop(1,'#49331c50');
+    ctx.fillStyle=polish;ctx.fillRect(0,0,w,h);
+  });
+  const lowerWall=new THREE.MeshStandardMaterial({color:'#c8a473',map:panelGrain,roughness:.77,bumpMap:panelGrain,bumpScale:.003});
+  const rail=material('#7d5c37',.62);
   face(shell,15.5,3.42,[0,1.79,-3.876],plaster);
   face(shell,9.16,3.42,[-7.734,1.79,.65],plaster,Math.PI/2);
   face(shell,9.16,3.42,[7.734,1.79,.65],plaster,-Math.PI/2);
@@ -220,10 +241,18 @@ export function buildStreet(THREE, parent) {
   box(shell,[.018,.87,9.12],[-7.722,.52,.65],lowerWall);
   box(shell,[.018,.87,9.12],[7.722,.52,.65],lowerWall);
   box(shell,[15.47,.046,.035],[0,.963,-3.845],rail);
+  box(shell,[15.47,.026,.025],[0,.911,-3.838],brass);
   for(const side of [-1,1]){
     box(shell,[.035,.046,9.12],[side*7.712,.963,.65],rail);
     box(shell,[.044,.093,9.12],[side*7.709,.13,.65],rail);
   }
+  // Deep window sills and worn timber trim turn the frontage into an inhabited room edge.
+  const sills=[];
+  for(const panes of [leftPanes,rightPanes])for(let i=0;i<panes.length-1;i++){
+    const width=panes[i+1]-panes[i]-.065,x=(panes[i]+panes[i+1])/2;
+    sills.push({dimensions:[width,.045,.24],position:[x,.38,5.36]});
+  }
+  boxes(shell,sills,rail);
   clad(9.8, 4.25, -8.056, 2.14, .68, -Math.PI / 2);
   clad(9.8, 4.25, 8.056, 2.14, .68, Math.PI / 2);
   clad(16.1, 4.25, 0, 2.14, -4.196, Math.PI);

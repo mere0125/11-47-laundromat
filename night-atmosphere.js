@@ -3,11 +3,11 @@ import {Reflector} from './vendor/Reflector.js';
 export function buildAtmosphere(T, scene) {
   scene.background = new T.Color('#0d1b31');
   scene.fog = new T.FogExp2('#0d1b31', .019);
-  const ambient = new T.HemisphereLight('#a8c8ef', '#b08a65', .64);
-  const sky = new T.DirectionalLight('#92bafa', .77);
+  const ambient = new T.HemisphereLight('#a9bfd8', '#b78154', .35);
+  const sky = new T.DirectionalLight('#8faacb', .31);
   sky.position.set(-7, 12, 9);
   scene.add(ambient, sky);
-  const luminous = new T.DirectionalLight('#ffddb0', .58);
+  const luminous = new T.DirectionalLight('#ffce8a', .40);
   luminous.position.set(0,6,1.6);
   luminous.target.position.set(1.3,0,-1);
   luminous.castShadow=true;
@@ -16,7 +16,7 @@ export function buildAtmosphere(T, scene) {
   luminous.shadow.normalBias=.033;
   scene.add(luminous,luminous.target);
   const warm = [-5.4, 0, 5.4].map(x => {
-    const light = new T.PointLight('#ffdbad', 18, 11, 2);
+    const light = new T.PointLight('#ffce8f', 12.5, 10, 2);
     light.position.set(x, 2.92, 1.55);
     scene.add(light);
     return light;
@@ -102,8 +102,8 @@ export function buildAtmosphere(T, scene) {
       neighborhood.visible=!scan;
       rain.material.uniforms.seconds.value = seconds;
       reflectedRoad.material.uniforms.seconds.value = seconds;
-      luminous.intensity=on?.58:.05;
-      for (const lamp of warm) lamp.intensity = on ? 18 : 1.8;
+      luminous.intensity=on?.40:.035;
+      for (const lamp of warm) lamp.intensity = on ? 12.5 : 1.4;
     }
   };
 }

@@ -1,11 +1,12 @@
 import * as THREE from './vendor/three.module.min.js';
-import {buildStreet} from './street-model.js?v=20261119-play7';
-import {buildAtmosphere,makeScan} from './night-atmosphere.js?v=20261119-play6';
-import {buildPeople} from './night-people.js?v=20261119-play6';
-import {makeNightSound} from './night-sound.js?v=20261119-play6';
-import {makeFirstPerson} from './first-person.js?v=20261119-play6';
-import {makeNightFilm,makeLaundryEnvironment} from './night-film.js?v=20261119-play6';
-import {makeNightTales} from './night-tales.js?v=20261119-play8';
+import {buildStreet} from './street-model.js?v=20261119-faces5';
+import {buildAtmosphere,makeScan} from './night-atmosphere.js?v=20261119-faces5';
+import {buildPeople} from './night-people.js?v=20261119-faces5';
+import {makeNightSound} from './night-sound.js?v=20261119-faces5';
+import {makeFirstPerson} from './first-person.js?v=20261119-faces5';
+import {makeNightFilm,makeLaundryEnvironment} from './night-film.js?v=20261119-faces5';
+import {makeNightTales} from './night-tales.js?v=20261119-faces5';
+import {makeNightAvatars} from './night-avatars.js?v=20261119-faces5';
 
 const stage=document.querySelector('#night-walkthrough');
 const surface=document.querySelector('#night-lens');
@@ -42,6 +43,21 @@ function mount(renderer) {
   }
   const atmosphere=buildAtmosphere(THREE,scene);
   const film=makeNightFilm(THREE,renderer);
+  const avatars=makeNightAvatars(scene,people,occupants,world);
+  const entryButton=find('walk-door');
+  entryButton.disabled=true;
+  entryButton.setAttribute('aria-busy','true');
+  entryButton.textContent='Opening…';
+  avatars.load().then(()=>{
+    surface.dataset.peopleReady=String(avatars.count);
+  }).catch(error=>{
+    console.warn('The detailed characters could not finish loading.',error);
+    surface.dataset.peopleReady='fallback';
+  }).finally(()=>{
+    entryButton.disabled=false;
+    entryButton.removeAttribute('aria-busy');
+    entryButton.textContent='Push the door';
+  });
   for(const fixture of room.group.children) {
     if(fixture.userData.obstacleIndex==null)continue;
     fixture.traverse(child=>{if(child.isMesh && !child.material.transparent)child.castShadow=true;});
@@ -340,6 +356,7 @@ function mount(renderer) {
     window.openLayoutStudio();
   }
   function updateLabels() {
+    surface.dataset.peopleReady=avatars.ready?String(avatars.count):surface.dataset.peopleReady||'loading';
     const attendant=minds.get('attendant'),dryer=laundryMachines.get(10);
     const found=attendant?.landmarks.get('machine-10')?.status==='needs repair';
     const text=!dryer?.fault?'Dryer 03 is turning again.'
@@ -361,6 +378,7 @@ function mount(renderer) {
       if(node===item.mesh || node===item.group)return true;
       if(item.obstacleIndex!=null && node.userData.obstacleIndex===item.obstacleIndex)return true;
       if(item.kind==='person' && node===people.actors.get(item.personId)?.actor)return true;
+      if(item.kind==='person' && node===avatars.actors.get(item.personId)?.root)return true;
     }
     return false;
   }
@@ -386,7 +404,8 @@ function mount(renderer) {
       if(score>=bestScore)continue;
       ray.set(camera.position,vector);
       ray.far=Math.max(.05,distance-.1);
-      const obstruction=ray.intersectObjects([room.group,street.shell,people.group],true)
+      const bodies=[...people.actors.entries()].map(([id,figure])=>avatars.actors.get(id)?.root||figure.actor);
+      const obstruction=ray.intersectObjects([room.group,street.shell,...bodies],true)
         .find(hit=>hit.distance>.08);
       if(obstruction && obstruction.distance<distance-.34 && !ownsHit(obstruction.object,item))continue;
       nearest=item;
@@ -480,6 +499,8 @@ function mount(renderer) {
     if(lampLast!==lightsOn) {room.updateLighting(lightsOn);lampLast=lightsOn;}
     for(const [i,machine] of laundryMachines)room.updateMachine(i,machine,elapsed/1000);
     if(!scanning)people.update(minds,reduced.matches?0:seconds,dt);
+    avatars.update(minds,reduced.matches?0:seconds,scanning?0:dt);
+    room.updateLife?.(reduced.matches?0:seconds);
     if(scan?.visible) {
       scan.material.uniforms.sweep.value=reduced.matches?15:-8+(seconds*2.1)%16;
       scan.material.uniforms.resolution.value=renderer.getPixelRatio();
